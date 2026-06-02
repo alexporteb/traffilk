@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Traffilk</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        kuma: {
+                            bg: '#0B1120',
+                            card: '#1E293B',
+                            primary: '#5865F2',
+                            border: '#334155',
+                            text: '#F8FAFC',
+                            textMuted: '#94A3B8'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0B1120; color: #F8FAFC; font-family: 'Inter', system-ui, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .kuma-card {
+            background-color: #1E293B;
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+        }
+        .btn-primary { background-color: #5865F2; color: white; transition: all 0.2s; }
+        .btn-primary:hover { background-color: #4752C4; }
+        .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
+        .input-field {
+            background-color: #0F172A;
+            border: 1px solid #334155;
+            color: white;
+            transition: all 0.2s;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #5865F2;
+            box-shadow: 0 0 0 1px #5865F2;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="w-full max-w-sm px-4">
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center font-bold text-3xl text-white shadow-lg mx-auto mb-4">T</div>
+            <h1 class="text-2xl font-bold tracking-wide">Traffilk</h1>
+            <p class="text-kuma-textMuted text-sm mt-1">Please log in to continue</p>
+        </div>
+
+        <div class="kuma-card p-8">
+            <div v-if="error" class="mb-4 p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm text-center">
+                {{ error }}
+            </div>
+
+            <form @submit.prevent="login">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-kuma-textMuted mb-1.5">Username</label>
+                    <input v-model="username" type="text" required autofocus class="input-field w-full rounded-lg px-4 py-2.5">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-kuma-textMuted mb-1.5">Password</label>
+                    <input v-model="password" type="password" required class="input-field w-full rounded-lg px-4 py-2.5">
+                </div>
+                
+                <button type="submit" :disabled="loading" class="btn-primary w-full rounded-lg py-2.5 font-medium flex justify-center items-center gap-2">
+                    <span v-if="loading" class="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
+                    <span v-else>Login</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue
+
+        createApp({
+            data() {
+                return {
+                    username: '',
+                    password: '',
+                    loading: false,
+                    error: ''
+                }
+            },
+            methods: {
+                async login() {
+                    this.loading = true
+                    this.error = ''
+                    try {
+                        const res = await fetch('api/login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                username: this.username,
+                                password: this.password
+                            })
+                        })
+                        
+                        if (res.ok) {
+                            window.location.href = './ui/'
+                        } else {
+                            const data = await res.json()
+                            this.error = data.error || 'Invalid credentials'
+                        }
+                    } catch (e) {
+                        this.error = 'Network error. Please try again.'
+                    } finally {
+                        this.loading = false
+                    }
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>

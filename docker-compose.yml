@@ -11,6 +11,8 @@ services:
       - ./data:/app/data
     environment:
       - TZ=UTC
+      - ADMIN_USER=admin
+      - ADMIN_PASS=admin
     networks:
       - remnawave-network
 

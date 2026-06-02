@@ -11,6 +11,25 @@ import (
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
+	// Unprotected routes
+	r.StaticFile("/login", "./ui/login.html")
+	r.POST("/api/login", LoginHandler)
+	r.POST("/api/logout", LogoutHandler)
+
+	// UI protection middleware
+	r.Use(func(c *gin.Context) {
+		path := c.Request.URL.Path
+		if path == "/ui" || (len(path) >= 4 && path[:4] == "/ui/") {
+			_, err := c.Cookie("token")
+			if err != nil {
+				c.Redirect(http.StatusFound, "../login")
+				c.Abort()
+				return
+			}
+		}
+		c.Next()
+	})
+
 	// Serve static files from UI folder
 	r.Static("/ui", "./ui")
 	r.Any("/", func(c *gin.Context) {
@@ -19,6 +38,7 @@ func SetupRouter() *gin.Engine {
 	})
 
 	api := r.Group("/api")
+	api.Use(AuthMiddleware())
 	{
 		api.GET("/nodes", getNodes)
 		api.POST("/nodes", addNode)
