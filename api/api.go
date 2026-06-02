@@ -14,7 +14,7 @@ func SetupRouter() *gin.Engine {
 	// Serve static files from UI folder
 	r.Static("/ui", "./ui")
 	r.GET("/", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, "/ui/")
+		c.Redirect(http.StatusMovedPermanently, "./ui/")
 	})
 
 	api := r.Group("/api")
