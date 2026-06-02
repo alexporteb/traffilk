@@ -11,6 +11,7 @@ RUN go mod download
 COPY . .
 
 # Build the binary
+RUN go mod tidy
 RUN CGO_ENABLED=1 GOOS=linux go build -a -ldflags '-w -s' -o traffilk-app .
 
 FROM alpine:latest
