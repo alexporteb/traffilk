@@ -57,7 +57,7 @@ sudo systemctl restart nginx
 2. Склонируйте проект из вашего Git-репозитория и перейдите в его папку:
 
 ```bash
-git clone https://github.com/ВАШ_ЛОГИН/ИМЯ_РЕПОЗИТОРИЯ.git traffilk
+git clone https://github.com/alexporteb/traefikk.git traffilk
 cd traffilk
 ```
 
