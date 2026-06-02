@@ -14,14 +14,16 @@
                 extend: {
                     colors: {
                         kuma: {
-                            bg: '#0B1120',
-                            card: '#1E293B',
-                            primary: '#5865F2', // Soft blue
-                            success: '#50C878', // Emerald green
-                            danger: '#DC2626',
-                            border: '#334155',
-                            text: '#F8FAFC',
-                            textMuted: '#94A3B8'
+                            bg: '#090c10', // Body bg from Uptime Kuma Dark
+                            card: '#0d1117', // $dark-bg
+                            cardHover: '#070a10', // $dark-bg2
+                            header: '#161b22', // $dark-header-bg
+                            border: '#1d2634', // $dark-border-color
+                            primary: '#5cdd8b', // $primary
+                            highlight: '#7ce8a4', // $highlight
+                            danger: '#dc3545', // $danger
+                            text: '#b1b8c0', // $dark-font-color
+                            textDark: '#020b05' // $dark-font-color2
                         }
                     }
                 }
@@ -29,20 +31,30 @@
         }
     </script>
     <style>
-        body { background-color: #0B1120; color: #F8FAFC; font-family: 'Inter', system-ui, sans-serif; overflow: hidden; }
+        body { 
+            background-color: #090c10; 
+            color: #b1b8c0; 
+            font-family: "Twemoji Country Flags", BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            overflow: hidden; 
+        }
         
-        .kuma-card {
-            background-color: #1E293B;
-            border: 1px solid #334155;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        .shadow-box {
+            background-color: #0d1117;
+            border: 1px solid #1d2634;
+            border-radius: 10px;
+            box-shadow: 0 15px 70px rgba(0, 0, 0, 0.1);
+            padding: 10px;
+        }
+        
+        .shadow-box.big-padding {
+            padding: 20px;
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        /* Custom Scrollbar - Uptime Kuma style */
+        ::-webkit-scrollbar { width: 10px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #64748B; }
+        ::-webkit-scrollbar-thumb { background: #1d2634; border-radius: 20px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
 
         .status-pill {
             display: inline-block;
@@ -50,79 +62,107 @@
             height: 10px;
             border-radius: 50%;
         }
-        .status-up { background-color: #50C878; box-shadow: 0 0 8px rgba(80, 200, 120, 0.4); }
-        .status-down { background-color: #DC2626; box-shadow: 0 0 8px rgba(220, 38, 38, 0.4); }
+        .status-up { background-color: #5cdd8b; box-shadow: 0 0 8px rgba(92, 221, 139, 0.4); }
+        .status-down { background-color: #dc3545; box-shadow: 0 0 8px rgba(220, 53, 69, 0.4); }
 
         .btn {
             display: inline-flex; align-items: center; justify-content: center;
-            padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 500;
+            padding: 0.375rem 20px; border-radius: 25px; font-weight: normal;
             transition: all 0.2s; cursor: pointer; border: 1px solid transparent;
         }
-        .btn-primary { background-color: #3b82f6; color: white; }
-        .btn-primary:hover { background-color: #2563eb; }
-        .btn-danger { background-color: transparent; color: #ef4444; border-color: #ef4444; }
-        .btn-danger:hover { background-color: rgba(239, 68, 68, 0.1); }
-        .btn-outline { background-color: transparent; border-color: #475569; color: #cbd5e1; }
-        .btn-outline:hover { background-color: #334155; }
+        .btn-primary { background-color: #5cdd8b; color: #020b05; border-color: #5cdd8b; }
+        .btn-primary:hover { background-color: #7ce8a4; border-color: #7ce8a4; color: #020b05; }
+        
+        .btn-normal { background-color: #161b22; color: #b1b8c0; border-color: #161b22; }
+        .btn-normal:hover { background-color: #0f1218; border-color: #0f1218; color: #b1b8c0; }
+
+        .btn-danger { background-color: transparent; color: #dc3545; border-color: #dc3545; }
+        .btn-danger:hover { background-color: #dc3545; color: white; }
+        
+        .form-control {
+            background-color: #070a10;
+            border: 1px solid #1d2634;
+            color: #b1b8c0;
+            border-radius: 0.375rem;
+            transition: all 0.2s;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #5cdd8b;
+            box-shadow: 0 0 0 0.25rem rgba(92, 221, 139, 0.25);
+        }
+
+        .monitor-list-item {
+            display: block;
+            text-decoration: none;
+            padding: 13px 15px 10px 15px;
+            border-radius: 10px;
+            transition: all ease-in-out 0.15s;
+            cursor: pointer;
+        }
+        .monitor-list-item:hover {
+            background-color: #070a10;
+        }
+        .monitor-list-item.active {
+            background-color: #070a10;
+            border-left: 4px solid #5cdd8b;
+        }
     </style>
 </head>
 <body>
     <div id="app" class="flex h-screen w-full">
         
         <!-- Sidebar -->
-        <aside class="w-80 border-r border-kuma-border bg-kuma-bg flex flex-col z-10 shadow-lg">
+        <aside class="w-80 border-r border-kuma-border bg-kuma-bg flex flex-col z-10">
             <!-- Header -->
-            <div class="p-4 border-b border-kuma-border flex items-center justify-between">
+            <div class="p-4 flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shadow-lg">T</div>
-                    <h1 class="text-xl font-bold tracking-wide">Traffilk</h1>
+                    <img src="https://raw.githubusercontent.com/louislam/uptime-kuma/master/public/icon.svg" class="w-8 h-8 rounded" alt="Logo" onerror="this.style.display='none'">
+                    <h1 class="text-xl font-bold tracking-wide text-white">Traffilk</h1>
                 </div>
-                <button @click="logout" title="Logout" class="text-kuma-textMuted hover:text-white transition">
+                <button @click="logout" title="Logout" class="text-kuma-text hover:text-white transition">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                 </button>
             </div>
             
             <!-- Controls -->
-            <div class="p-4 space-y-3 border-b border-kuma-border">
-                <button @click="showAddModal = true" class="btn btn-primary w-full shadow flex gap-2">
+            <div class="px-4 pb-3 space-y-3">
+                <button @click="showAddModal = true" class="btn btn-primary w-full shadow-box flex gap-2 justify-center">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    Add New Node
+                    Add New Monitor
                 </button>
                 <div class="relative">
-                    <svg class="w-4 h-4 absolute left-3 top-3 text-kuma-textMuted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    <input type="text" v-model="searchQuery" placeholder="Search..." class="w-full bg-kuma-card border border-kuma-border rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition">
+                    <svg class="w-4 h-4 absolute left-3 top-3 text-kuma-text" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <input type="text" v-model="searchQuery" placeholder="Search..." class="form-control w-full pl-9 pr-3 py-2 text-sm">
                 </div>
             </div>
 
             <!-- Node List -->
-            <div class="flex-1 overflow-y-auto">
-                <div v-if="filteredNodes.length === 0" class="p-6 text-center text-kuma-textMuted text-sm">
-                    No nodes found.
+            <div class="flex-1 overflow-y-auto px-2">
+                <div v-if="filteredNodes.length === 0" class="p-4 text-center text-kuma-text text-sm">
+                    No monitors found.
                 </div>
                 <div v-for="node in filteredNodes" :key="node.id" 
                      @click="selectNode(node)"
-                     :class="['px-4 py-3 cursor-pointer border-l-4 transition-colors flex items-center justify-between group', 
-                              selectedNode && selectedNode.id === node.id ? 'border-blue-500 bg-kuma-card' : 'border-transparent hover:bg-slate-800/50']">
+                     :class="['monitor-list-item flex items-center justify-between group mb-1', selectedNode && selectedNode.id === node.id ? 'active' : '']">
                     
                     <div class="flex items-center gap-3 overflow-hidden">
                         <div class="status-pill status-up"></div>
                         <div class="truncate">
-                            <div class="font-medium text-sm text-white truncate">{{ node.name }}</div>
-                            <div class="text-xs text-kuma-textMuted truncate mt-0.5">{{ node.url }}</div>
+                            <div class="text-sm text-white truncate">{{ node.name }}</div>
+                            <div class="text-xs text-kuma-text truncate">{{ node.url }}</div>
                         </div>
                     </div>
-                    <!-- Right chevron -->
-                    <svg class="w-4 h-4 text-kuma-textMuted opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </div>
             </div>
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 flex flex-col bg-[#050B14] overflow-hidden relative">
-            <div v-if="!selectedNode" class="flex-1 flex items-center justify-center text-kuma-textMuted">
-                <div class="text-center">
-                    <svg class="w-20 h-20 mx-auto mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                    <p class="text-lg">Select a node from the sidebar</p>
+        <main class="flex-1 flex flex-col bg-kuma-bg overflow-hidden relative">
+            <div v-if="!selectedNode" class="flex-1 flex items-center justify-center text-kuma-text">
+                <div class="text-center shadow-box big-padding">
+                    <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    <p class="text-lg">Select a monitor from the sidebar</p>
                 </div>
             </div>
             
@@ -131,10 +171,9 @@
                 <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-8">
                     <div>
                         <div class="flex items-center gap-3 mb-2">
-                            <div class="status-pill status-up" style="width: 14px; height: 14px;"></div>
                             <h2 class="text-3xl font-bold text-white">{{ selectedNode.name }}</h2>
                         </div>
-                        <a :href="selectedNode.url" target="_blank" class="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1 w-fit">
+                        <a :href="selectedNode.url" target="_blank" class="text-kuma-primary hover:text-kuma-highlight text-sm flex items-center gap-1 w-fit transition">
                             {{ selectedNode.url }}
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                         </a>
@@ -142,37 +181,30 @@
                     
                     <div class="flex items-center gap-2">
                         <button @click="deleteNode(selectedNode.id)" class="btn btn-danger text-sm">
-                            Delete Node
+                            Delete
                         </button>
                     </div>
                 </div>
 
                 <!-- Stats Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <div class="kuma-card p-6 flex items-center gap-5">
-                        <div class="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div class="shadow-box big-padding flex items-center gap-5">
                         <div>
-                            <p class="text-kuma-textMuted text-sm font-medium mb-1">Total Received Today</p>
-                            <p class="text-2xl font-bold text-white">{{ formatBytes(todayRx) }}</p>
+                            <p class="text-kuma-text text-sm mb-1">Total Received Today</p>
+                            <p class="text-2xl font-bold text-kuma-primary">{{ formatBytes(todayRx) }}</p>
                         </div>
                     </div>
-                    <div class="kuma-card p-6 flex items-center gap-5">
-                        <div class="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                        </div>
+                    <div class="shadow-box big-padding flex items-center gap-5">
                         <div>
-                            <p class="text-kuma-textMuted text-sm font-medium mb-1">Total Transmitted Today</p>
-                            <p class="text-2xl font-bold text-white">{{ formatBytes(todayTx) }}</p>
+                            <p class="text-kuma-text text-sm mb-1">Total Transmitted Today</p>
+                            <p class="text-2xl font-bold text-blue-400">{{ formatBytes(todayTx) }}</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Chart Card -->
-                <div class="kuma-card p-6">
-                    <h3 class="text-lg font-semibold mb-6 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-kuma-textMuted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+                <div class="shadow-box big-padding">
+                    <h3 class="text-lg font-semibold mb-6 flex items-center gap-2 text-white">
                         Traffic History (Last 30 Days)
                     </h3>
                     <div class="w-full h-80 relative">
@@ -183,27 +215,27 @@
         </main>
 
         <!-- Add Node Modal -->
-        <div v-if="showAddModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div class="kuma-card w-full max-w-md shadow-2xl transform transition-all">
-                <div class="flex justify-between items-center p-5 border-b border-kuma-border">
-                    <h3 class="text-lg font-bold">Add New Node</h3>
-                    <button @click="showAddModal = false" class="text-kuma-textMuted hover:text-white">
+        <div v-if="showAddModal" class="fixed inset-0 bg-black/50 backdrop-blur-[3px] flex items-center justify-center z-50 p-4">
+            <div class="shadow-box big-padding w-full max-w-md transform transition-all">
+                <div class="flex justify-between items-center mb-5 border-b border-kuma-border pb-3">
+                    <h3 class="text-xl font-bold text-white">Add New Monitor</h3>
+                    <button @click="showAddModal = false" class="text-kuma-text hover:text-white">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
-                <div class="p-6">
+                <div>
                     <form @submit.prevent="addNode">
-                        <div class="mb-5">
-                            <label class="block text-sm font-medium text-kuma-textMuted mb-1.5">Friendly Name</label>
-                            <input v-model="newNode.name" required type="text" class="w-full bg-[#0F172A] border border-kuma-border rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition" placeholder="e.g. Web Server">
+                        <div class="mb-4">
+                            <label class="block text-sm text-kuma-text mb-1.5">Friendly Name</label>
+                            <input v-model="newNode.name" required type="text" class="form-control w-full px-3 py-2" placeholder="e.g. Web Server">
                         </div>
                         <div class="mb-6">
-                            <label class="block text-sm font-medium text-kuma-textMuted mb-1.5">Prometheus URL</label>
-                            <input v-model="newNode.url" required type="url" class="w-full bg-[#0F172A] border border-kuma-border rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition" placeholder="https://server.com/metrics">
+                            <label class="block text-sm text-kuma-text mb-1.5">Prometheus URL</label>
+                            <input v-model="newNode.url" required type="url" class="form-control w-full px-3 py-2" placeholder="https://server.com/metrics">
                         </div>
-                        <div class="flex justify-end gap-3">
-                            <button type="button" @click="showAddModal = false" class="btn btn-outline">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Save Node</button>
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button type="button" @click="showAddModal = false" class="btn btn-normal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save</button>
                         </div>
                     </form>
                 </div>
@@ -343,24 +375,24 @@
                                 {
                                     label: 'Download (MB)',
                                     data: rxData,
-                                    borderColor: '#50C878',
-                                    backgroundColor: 'rgba(80, 200, 120, 0.1)',
+                                    borderColor: '#5cdd8b',
+                                    backgroundColor: 'rgba(92, 221, 139, 0.1)',
                                     borderWidth: 2,
                                     fill: true,
                                     tension: 0.4,
                                     pointRadius: 3,
-                                    pointBackgroundColor: '#50C878'
+                                    pointBackgroundColor: '#5cdd8b'
                                 },
                                 {
                                     label: 'Upload (MB)',
                                     data: txData,
-                                    borderColor: '#5865F2',
-                                    backgroundColor: 'rgba(88, 101, 242, 0.1)',
+                                    borderColor: '#3b82f6',
+                                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
                                     borderWidth: 2,
                                     fill: true,
                                     tension: 0.4,
                                     pointRadius: 3,
-                                    pointBackgroundColor: '#5865F2'
+                                    pointBackgroundColor: '#3b82f6'
                                 }
                             ]
                         },
@@ -371,15 +403,15 @@
                                 legend: {
                                     position: 'top',
                                     align: 'end',
-                                    labels: { color: '#94A3B8', boxWidth: 12, padding: 20 }
+                                    labels: { color: '#b1b8c0', boxWidth: 12, padding: 20 }
                                 },
                                 tooltip: {
                                     mode: 'index',
                                     intersect: false,
-                                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                                    titleColor: '#F8FAFC',
-                                    bodyColor: '#cbd5e1',
-                                    borderColor: '#334155',
+                                    backgroundColor: '#0d1117',
+                                    titleColor: '#ffffff',
+                                    bodyColor: '#b1b8c0',
+                                    borderColor: '#1d2634',
                                     borderWidth: 1,
                                     padding: 12,
                                     callbacks: {
@@ -400,13 +432,13 @@
                             },
                             scales: {
                                 x: {
-                                    grid: { color: '#1E293B', drawBorder: false },
-                                    ticks: { color: '#64748B', maxRotation: 45, minRotation: 45 }
+                                    grid: { color: '#1d2634', drawBorder: false },
+                                    ticks: { color: '#b1b8c0', maxRotation: 45, minRotation: 45 }
                                 },
                                 y: {
-                                    grid: { color: '#1E293B', drawBorder: false },
+                                    grid: { color: '#1d2634', drawBorder: false },
                                     ticks: { 
-                                        color: '#64748B',
+                                        color: '#b1b8c0',
                                         callback: function(value) {
                                             if (value >= 1024) return (value / 1024).toFixed(1) + ' GB'
                                             return value + ' MB'

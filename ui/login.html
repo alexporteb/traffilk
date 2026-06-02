@@ -13,12 +13,13 @@
                 extend: {
                     colors: {
                         kuma: {
-                            bg: '#0B1120',
-                            card: '#1E293B',
-                            primary: '#5865F2',
-                            border: '#334155',
-                            text: '#F8FAFC',
-                            textMuted: '#94A3B8'
+                            bg: '#090c10',
+                            card: '#0d1117',
+                            border: '#1d2634',
+                            primary: '#5cdd8b',
+                            danger: '#dc3545',
+                            text: '#b1b8c0',
+                            textDark: '#020b05'
                         }
                     }
                 }
@@ -26,54 +27,71 @@
         }
     </script>
     <style>
-        body { background-color: #0B1120; color: #F8FAFC; font-family: 'Inter', system-ui, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-        .kuma-card {
-            background-color: #1E293B;
-            border: 1px solid #334155;
-            border-radius: 0.75rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+        body { 
+            background-color: #090c10; 
+            color: #b1b8c0; 
+            font-family: "Twemoji Country Flags", BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; 
         }
-        .btn-primary { background-color: #5865F2; color: white; transition: all 0.2s; }
-        .btn-primary:hover { background-color: #4752C4; }
+        
+        .shadow-box {
+            background-color: #0d1117;
+            border: 1px solid #1d2634;
+            border-radius: 10px;
+            box-shadow: 0 15px 70px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        .btn-primary { 
+            background-color: #5cdd8b; 
+            color: #020b05; 
+            border: 1px solid #5cdd8b;
+            transition: all 0.2s; 
+            padding: 0.375rem 20px;
+            border-radius: 25px;
+        }
+        .btn-primary:hover { background-color: #7ce8a4; border-color: #7ce8a4; }
         .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
-        .input-field {
-            background-color: #0F172A;
-            border: 1px solid #334155;
-            color: white;
+        
+        .form-control {
+            background-color: #070a10;
+            border: 1px solid #1d2634;
+            color: #b1b8c0;
+            border-radius: 0.375rem;
             transition: all 0.2s;
         }
-        .input-field:focus {
+        .form-control:focus {
             outline: none;
-            border-color: #5865F2;
-            box-shadow: 0 0 0 1px #5865F2;
+            border-color: #5cdd8b;
+            box-shadow: 0 0 0 0.25rem rgba(92, 221, 139, 0.25);
         }
     </style>
 </head>
 <body>
     <div id="app" class="w-full max-w-sm px-4">
         <div class="text-center mb-8">
-            <div class="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center font-bold text-3xl text-white shadow-lg mx-auto mb-4">T</div>
-            <h1 class="text-2xl font-bold tracking-wide">Traffilk</h1>
-            <p class="text-kuma-textMuted text-sm mt-1">Please log in to continue</p>
+            <img src="https://raw.githubusercontent.com/louislam/uptime-kuma/master/public/icon.svg" class="w-20 h-20 mx-auto mb-4 drop-shadow-lg" alt="Logo" onerror="this.style.display='none'">
         </div>
 
-        <div class="kuma-card p-8">
+        <div class="shadow-box pb-8">
+            <h1 class="text-2xl font-bold tracking-wide text-white text-center mb-6">Traffilk</h1>
+
             <div v-if="error" class="mb-4 p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm text-center">
                 {{ error }}
             </div>
 
             <form @submit.prevent="login">
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-kuma-textMuted mb-1.5">Username</label>
-                    <input v-model="username" type="text" required autofocus class="input-field w-full rounded-lg px-4 py-2.5">
+                    <label class="block text-sm font-medium text-kuma-text mb-1.5">Username</label>
+                    <input v-model="username" type="text" required autofocus class="form-control w-full px-3 py-2">
                 </div>
                 <div class="mb-6">
-                    <label class="block text-sm font-medium text-kuma-textMuted mb-1.5">Password</label>
-                    <input v-model="password" type="password" required class="input-field w-full rounded-lg px-4 py-2.5">
+                    <label class="block text-sm font-medium text-kuma-text mb-1.5">Password</label>
+                    <input v-model="password" type="password" required class="form-control w-full px-3 py-2">
                 </div>
                 
-                <button type="submit" :disabled="loading" class="btn-primary w-full rounded-lg py-2.5 font-medium flex justify-center items-center gap-2">
-                    <span v-if="loading" class="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
+                <button type="submit" :disabled="loading" class="btn-primary w-full py-2 font-medium flex justify-center items-center gap-2">
+                    <span v-if="loading" class="w-5 h-5 border-2 border-kuma-textDark/20 border-t-kuma-textDark rounded-full animate-spin"></span>
                     <span v-else>Login</span>
                 </button>
             </form>
@@ -97,7 +115,7 @@
                     this.loading = true
                     this.error = ''
                     try {
-                        const res = await fetch('api/login', {
+                        const res = await fetch('../api/login', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -107,7 +125,7 @@
                         })
                         
                         if (res.ok) {
-                            window.location.href = './ui/'
+                            window.location.href = '../ui/'
                         } else {
                             const data = await res.json()
                             this.error = data.error || 'Invalid credentials'
