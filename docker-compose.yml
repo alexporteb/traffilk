@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  traffilk:
+    build: .
+    container_name: traffilk
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - TZ=UTC

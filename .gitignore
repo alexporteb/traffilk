@@ -1,0 +1,19 @@
+# Binaries
+traffilk
+traffilk.exe
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Database
+data/
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# OS specific files
+.DS_Store
+Thumbs.db
