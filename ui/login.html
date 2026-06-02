@@ -17,9 +17,9 @@
                             card: '#0d1117',
                             border: '#1d2634',
                             primary: '#5cdd8b',
-                            danger: '#dc3545',
+                            highlight: '#7ce8a4',
                             text: '#b1b8c0',
-                            textDark: '#020b05'
+                            danger: '#dc3545'
                         }
                     }
                 }
@@ -31,68 +31,83 @@
             background-color: #090c10; 
             color: #b1b8c0; 
             font-family: "Twemoji Country Flags", BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
         }
-        
         .shadow-box {
             background-color: #0d1117;
             border: 1px solid #1d2634;
             border-radius: 10px;
             box-shadow: 0 15px 70px rgba(0, 0, 0, 0.1);
-            padding: 20px;
+            padding: 30px;
         }
-
+        .form-control { 
+            background-color: #070a10; 
+            border: 1px solid #1d2634; 
+            color: #b1b8c0; 
+            border-radius: 0.375rem; 
+            transition: all 0.2s; 
+        }
+        .form-control:focus { 
+            outline: none; 
+            border-color: #5cdd8b; 
+            box-shadow: 0 0 0 0.25rem rgba(92, 221, 139, 0.25); 
+        }
         .btn-primary { 
             background-color: #5cdd8b; 
             color: #020b05; 
             border: 1px solid #5cdd8b;
-            transition: all 0.2s; 
-            padding: 0.375rem 20px;
             border-radius: 25px;
-        }
-        .btn-primary:hover { background-color: #7ce8a4; border-color: #7ce8a4; }
-        .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
-        
-        .form-control {
-            background-color: #070a10;
-            border: 1px solid #1d2634;
-            color: #b1b8c0;
-            border-radius: 0.375rem;
+            padding: 0.5rem 20px;
+            font-weight: 500;
             transition: all 0.2s;
         }
-        .form-control:focus {
-            outline: none;
-            border-color: #5cdd8b;
-            box-shadow: 0 0 0 0.25rem rgba(92, 221, 139, 0.25);
+        .btn-primary:hover:not(:disabled) { 
+            background-color: #7ce8a4; 
+            border-color: #7ce8a4;
+        }
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
         }
     </style>
 </head>
 <body>
     <div id="app" class="w-full max-w-sm px-4">
-        <div class="text-center mb-8">
-            <img src="https://raw.githubusercontent.com/louislam/uptime-kuma/master/public/icon.svg" class="w-20 h-20 mx-auto mb-4 drop-shadow-lg" alt="Logo" onerror="this.style.display='none'">
+        <div class="text-center mb-8 flex flex-col items-center">
+            <img src="https://raw.githubusercontent.com/louislam/uptime-kuma/master/public/icon.svg" class="w-16 h-16 mb-4 rounded-xl" alt="Logo">
+            <h1 class="text-3xl font-bold text-white tracking-wide">Traffilk</h1>
         </div>
-
-        <div class="shadow-box pb-8">
-            <h1 class="text-2xl font-bold tracking-wide text-white text-center mb-6">Traffilk</h1>
-
-            <div v-if="error" class="mb-4 p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm text-center">
+        
+        <div class="shadow-box relative">
+            <div class="absolute top-4 right-4">
+                <select v-model="currentLang" @change="changeLang" class="form-control text-xs px-2 py-1 cursor-pointer">
+                    <option value="en">EN</option>
+                    <option value="ru">RU</option>
+                </select>
+            </div>
+            
+            <h2 class="text-xl font-bold text-white mb-6">{{ t('sign_in') }}</h2>
+            
+            <div v-if="error" class="mb-4 p-3 rounded bg-kuma-danger/10 border border-kuma-danger/20 text-kuma-danger text-sm">
                 {{ error }}
             </div>
 
             <form @submit.prevent="login">
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-kuma-text mb-1.5">Username</label>
-                    <input v-model="username" type="text" required autofocus class="form-control w-full px-3 py-2">
+                    <label class="block text-sm text-kuma-text mb-1.5">{{ t('username') }}</label>
+                    <input v-model="username" type="text" required class="form-control w-full px-3 py-2">
                 </div>
                 <div class="mb-6">
-                    <label class="block text-sm font-medium text-kuma-text mb-1.5">Password</label>
+                    <label class="block text-sm text-kuma-text mb-1.5">{{ t('password') }}</label>
                     <input v-model="password" type="password" required class="form-control w-full px-3 py-2">
                 </div>
-                
-                <button type="submit" :disabled="loading" class="btn-primary w-full py-2 font-medium flex justify-center items-center gap-2">
-                    <span v-if="loading" class="w-5 h-5 border-2 border-kuma-textDark/20 border-t-kuma-textDark rounded-full animate-spin"></span>
-                    <span v-else>Login</span>
+                <button type="submit" :disabled="loading" class="btn-primary w-full">
+                    <span v-if="loading">{{ t('logging_in') }}</span>
+                    <span v-else>{{ t('login') }}</span>
                 </button>
             </form>
         </div>
@@ -101,21 +116,51 @@
     <script>
         const { createApp } = Vue
 
+        const translations = {
+            en: {
+                sign_in: "Sign In",
+                username: "Username",
+                password: "Password",
+                login: "Login",
+                logging_in: "Logging in...",
+                err_creds: "Invalid credentials"
+            },
+            ru: {
+                sign_in: "Вход",
+                username: "Имя пользователя",
+                password: "Пароль",
+                login: "Войти",
+                logging_in: "Вход...",
+                err_creds: "Неверное имя пользователя или пароль"
+            }
+        }
+
         createApp({
             data() {
                 return {
                     username: '',
                     password: '',
+                    error: '',
                     loading: false,
-                    error: ''
+                    currentLang: localStorage.getItem('traffilk_lang') || 'en'
                 }
             },
+            mounted() {
+                document.documentElement.lang = this.currentLang
+            },
             methods: {
+                t(key) {
+                    return translations[this.currentLang][key] || key
+                },
+                changeLang() {
+                    localStorage.setItem('traffilk_lang', this.currentLang)
+                    document.documentElement.lang = this.currentLang
+                },
                 async login() {
-                    this.loading = true
                     this.error = ''
+                    this.loading = true
                     try {
-                        const res = await fetch('../api/login', {
+                        const res = await fetch('/api/login', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -123,15 +168,14 @@
                                 password: this.password
                             })
                         })
-                        
+
                         if (res.ok) {
-                            window.location.href = '../ui/'
+                            window.location.href = '/traffilk/'
                         } else {
-                            const data = await res.json()
-                            this.error = data.error || 'Invalid credentials'
+                            this.error = this.t('err_creds')
                         }
-                    } catch (e) {
-                        this.error = 'Network error. Please try again.'
+                    } catch (err) {
+                        this.error = 'Server error'
                     } finally {
                         this.loading = false
                     }

@@ -1,111 +1,59 @@
-# Руководство по установке и настройке (Traffilk)
+# Traffilk V2
 
-В этом руководстве описано, как запустить **основную ноду** (наш Docker-контейнер с дашбордом) и как настроить **остальные ноды** (серверы с Nginx), чтобы они отдавали метрики.
+A lightweight, beautiful, and secure traffic monitoring dashboard for Prometheus Node Exporter.
+Traffilk connects to your existing Prometheus metrics endpoints to fetch and aggregate daily incoming/outgoing network traffic. 
 
----
+V2 features a completely redesigned user interface (inspired by Uptime Kuma) and built-in JWT authentication.
 
-## Часть 1: Настройка целевых серверов (Другие ноды)
+## Features
 
-На каждом сервере, трафик которого мы хотим отслеживать, нужно установить `node_exporter`, чтобы он собирал сетевую статистику, и настроить Nginx для проксирования этих метрик по HTTPS.
+- **Beautiful Uptime Kuma-inspired UI**: Dark theme, rounded components, responsive design.
+- **Secure Access**: Built-in login screen using JWT cookies.
+- **Fast Updates**: Polls nodes every minute to provide real-time traffic deltas.
+- **Multi-Language Support**: Fully translated in English (EN) and Russian (RU).
+- **Easy Management**: Add, Edit, and Delete nodes seamlessly.
 
-### Шаг 1: Установка `node_exporter` (в одну команду)
-Выполните эту команду на целевом сервере:
+## Prerequisites
 
-```bash
-curl -sSL https://raw.githubusercontent.com/alexporteb/traefikk/main/install_node_exporter.sh | bash
-```
-*(Скрипт сам скачает экспортер, настроит системный сервис и запустит его на порту `9100`).*
+Each node you want to monitor must be running `node_exporter` (specifically exposing `node_network_receive_bytes_total` and `node_network_transmit_bytes_total`).
 
-### (Опционально) Удаление `node_exporter`
-Если вам понадобится полностью удалить `node_exporter` с ноды, выполните эту команду:
+## Quick Start (Docker)
 
-```bash
-curl -sSL https://raw.githubusercontent.com/alexporteb/traefikk/main/uninstall_node_exporter.sh | bash
-```
-### Шаг 2: Настройка Reverse Proxy (Nginx или Caddy)
-Теперь нужно сделать так, чтобы сервер отдавал эти метрики по HTTPS (например, по пути `/metrics`). 
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/alexporteb/traefikk.git
+   cd traefikk
+   ```
 
-**Вариант А: Если вы используете Nginx**
-Откройте конфигурацию вашего сайта (например, `/etc/nginx/sites-available/default`) и добавьте блок `location /metrics` внутри `server { ... }`:
-```nginx
-server {
-    listen 443 ssl;
-    server_name vash-server.com;
-    
-    # ... ваши настройки ssl ...
+2. Open `docker-compose.yml` and modify the environment variables to set your admin credentials:
+   ```yaml
+   environment:
+     - ADMIN_USER=admin
+     - ADMIN_PASS=your_secure_password
+     - JWT_SECRET=change-this-secret
+   ```
 
-    # Проксируем запрос на node_exporter
-    location /metrics {
-        proxy_pass http://localhost:9100/metrics;
-    }
-}
-```
-Перезапустите Nginx: `sudo systemctl restart nginx`
+3. Start the container:
+   ```bash
+   docker compose up -d
+   ```
 
-**Вариант Б: Если вы используете Caddy**
-Откройте ваш `Caddyfile` (обычно в `/etc/caddy/Caddyfile`) и добавьте блок `handle_path`:
-```caddy
-vash-server.com {
-    # ... другие настройки ...
-    
-    handle_path /metrics* {
-        reverse_proxy localhost:9100
-    }
-}
-```
-Перезапустите Caddy: `sudo systemctl restart caddy`
+4. Access the dashboard:
+   Open your browser and navigate to `http://localhost:8080/ui/` (or your reverse proxy domain).
 
-**Проверка:** Откройте в браузере `https://vash-server.com/metrics`. Вы должны увидеть кучу текста с метриками (в том числе `node_network_receive_bytes_total`).
+## Adding Nodes
 
----
+1. Log in using your `ADMIN_USER` and `ADMIN_PASS`.
+2. Click **Add New Monitor** in the sidebar.
+3. Enter a **Friendly Name** (e.g., `Web Server`).
+4. Enter the **Prometheus URL** (e.g., `https://your-node.com/metrics`).
+5. Click **Save**.
 
-## Часть 2: Настройка Главной Ноды
+*Note: Traffilk will instantly poll the node upon adding or editing it. If this is a new node, the chart will show 0 bytes for the current day because it needs at least two data points (1 minute apart) to calculate the traffic delta.*
 
-Главная нода — это сервер, на котором будет крутиться наш интерфейс (Traffilk) и собирать статистику с других нод. 
+## Technical Details
 
-### Скачивание и Запуск контейнера
-
-1. Убедитесь, что на главной ноде установлены `git` и `docker` (современный Docker уже включает в себя плагин `compose`).
-2. Склонируйте проект из вашего Git-репозитория и перейдите в его папку:
-
-```bash
-git clone https://github.com/alexporteb/traefikk.git traffilk
-cd traffilk
-```
-
-3. Запустите проект в фоновом режиме:
-
-```bash
-docker compose up -d --build
-```
-
-### Проксирование Дашборда (Опционально)
-Если вы хотите, чтобы панель открывалась по красивой ссылке (например, `https://main.com/traffilk/`) через ваш Nginx или Caddy, добавьте следующие настройки (они отрезают префикс `/traffilk` и перенаправляют запрос в контейнер):
-
-**Для Nginx:**
-```nginx
-location /traffilk/ {
-    proxy_pass http://localhost:8080/;
-}
-```
-
-**Для Caddy:**
-```caddy
-main.com {
-    # ... другие настройки ...
-    handle_path /traffilk* {
-        reverse_proxy localhost:8080
-    }
-}
-```
-*(Обязательно используйте слэш на конце `https://main.com/traffilk/` при открытии в браузере, чтобы графики загрузились корректно).*
-
-### Добавление нод в Дашборд
-
-1. Откройте в браузере IP главной ноды на порту 8080 (например: `http://main-node-ip:8080`).
-2. Нажмите кнопку **"Add Node"**.
-3. Введите название сервера (например, "Web Server 1").
-4. В поле **Prometheus URL** вставьте ссылку на метрики, которую мы настроили в Части 1 (например: `https://vash-server.com/metrics`).
-5. Нажмите **Save**.
-
-**Готово!** Теперь Главная Нода будет раз в час (а также немедленно при запуске) опрашивать URL по HTTPS, парсить скачанные байты и строить красивые графики. База данных надежно сохраняется в папке `./data`.
+- **Backend**: Go (Gin framework, SQLite)
+- **Frontend**: HTML5, Vue 3, TailwindCSS, Chart.js
+- **Metrics Parser**: Custom lightweight HTTP scanner (no heavy Prometheus libraries required)
+- **Database**: SQLite (stored in `./data/data.db`)

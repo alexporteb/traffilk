@@ -14,16 +14,16 @@
                 extend: {
                     colors: {
                         kuma: {
-                            bg: '#090c10', // Body bg from Uptime Kuma Dark
-                            card: '#0d1117', // $dark-bg
-                            cardHover: '#070a10', // $dark-bg2
-                            header: '#161b22', // $dark-header-bg
-                            border: '#1d2634', // $dark-border-color
-                            primary: '#5cdd8b', // $primary
-                            highlight: '#7ce8a4', // $highlight
-                            danger: '#dc3545', // $danger
-                            text: '#b1b8c0', // $dark-font-color
-                            textDark: '#020b05' // $dark-font-color2
+                            bg: '#090c10',
+                            card: '#0d1117',
+                            cardHover: '#070a10',
+                            header: '#161b22',
+                            border: '#1d2634',
+                            primary: '#5cdd8b',
+                            highlight: '#7ce8a4',
+                            danger: '#dc3545',
+                            text: '#b1b8c0',
+                            textDark: '#020b05'
                         }
                     }
                 }
@@ -37,7 +37,6 @@
             font-family: "Twemoji Country Flags", BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             overflow: hidden; 
         }
-        
         .shadow-box {
             background-color: #0d1117;
             border: 1px solid #1d2634;
@@ -45,73 +44,30 @@
             box-shadow: 0 15px 70px rgba(0, 0, 0, 0.1);
             padding: 10px;
         }
-        
-        .shadow-box.big-padding {
-            padding: 20px;
-        }
-
-        /* Custom Scrollbar - Uptime Kuma style */
+        .shadow-box.big-padding { padding: 20px; }
         ::-webkit-scrollbar { width: 10px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #1d2634; border-radius: 20px; }
         ::-webkit-scrollbar-thumb:hover { background: #334155; }
-
-        .status-pill {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-        }
+        .status-pill { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
         .status-up { background-color: #5cdd8b; box-shadow: 0 0 8px rgba(92, 221, 139, 0.4); }
         .status-down { background-color: #dc3545; box-shadow: 0 0 8px rgba(220, 53, 69, 0.4); }
-
-        .btn {
-            display: inline-flex; align-items: center; justify-content: center;
-            padding: 0.375rem 20px; border-radius: 25px; font-weight: normal;
-            transition: all 0.2s; cursor: pointer; border: 1px solid transparent;
-        }
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.375rem 20px; border-radius: 25px; font-weight: normal; transition: all 0.2s; cursor: pointer; border: 1px solid transparent; }
         .btn-primary { background-color: #5cdd8b; color: #020b05; border-color: #5cdd8b; }
         .btn-primary:hover { background-color: #7ce8a4; border-color: #7ce8a4; color: #020b05; }
-        
         .btn-normal { background-color: #161b22; color: #b1b8c0; border-color: #161b22; }
         .btn-normal:hover { background-color: #0f1218; border-color: #0f1218; color: #b1b8c0; }
-
         .btn-danger { background-color: transparent; color: #dc3545; border-color: #dc3545; }
         .btn-danger:hover { background-color: #dc3545; color: white; }
-        
-        .form-control {
-            background-color: #070a10;
-            border: 1px solid #1d2634;
-            color: #b1b8c0;
-            border-radius: 0.375rem;
-            transition: all 0.2s;
-        }
-        .form-control:focus {
-            outline: none;
-            border-color: #5cdd8b;
-            box-shadow: 0 0 0 0.25rem rgba(92, 221, 139, 0.25);
-        }
-
-        .monitor-list-item {
-            display: block;
-            text-decoration: none;
-            padding: 13px 15px 10px 15px;
-            border-radius: 10px;
-            transition: all ease-in-out 0.15s;
-            cursor: pointer;
-        }
-        .monitor-list-item:hover {
-            background-color: #070a10;
-        }
-        .monitor-list-item.active {
-            background-color: #070a10;
-            border-left: 4px solid #5cdd8b;
-        }
+        .form-control { background-color: #070a10; border: 1px solid #1d2634; color: #b1b8c0; border-radius: 0.375rem; transition: all 0.2s; }
+        .form-control:focus { outline: none; border-color: #5cdd8b; box-shadow: 0 0 0 0.25rem rgba(92, 221, 139, 0.25); }
+        .monitor-list-item { display: block; text-decoration: none; padding: 13px 15px 10px 15px; border-radius: 10px; transition: all ease-in-out 0.15s; cursor: pointer; }
+        .monitor-list-item:hover { background-color: #070a10; }
+        .monitor-list-item.active { background-color: #070a10; border-left: 4px solid #5cdd8b; }
     </style>
 </head>
 <body>
     <div id="app" class="flex h-screen w-full">
-        
         <!-- Sidebar -->
         <aside class="w-80 border-r border-kuma-border bg-kuma-bg flex flex-col z-10">
             <!-- Header -->
@@ -120,27 +76,24 @@
                     <img src="https://raw.githubusercontent.com/louislam/uptime-kuma/master/public/icon.svg" class="w-8 h-8 rounded" alt="Logo" onerror="this.style.display='none'">
                     <h1 class="text-xl font-bold tracking-wide text-white">Traffilk</h1>
                 </div>
-                <button @click="logout" title="Logout" class="text-kuma-text hover:text-white transition">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                </button>
             </div>
             
             <!-- Controls -->
             <div class="px-4 pb-3 space-y-3">
                 <button @click="showAddModal = true" class="btn btn-primary w-full shadow-box flex gap-2 justify-center">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    Add New Monitor
+                    {{ t('add_monitor') }}
                 </button>
                 <div class="relative">
                     <svg class="w-4 h-4 absolute left-3 top-3 text-kuma-text" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    <input type="text" v-model="searchQuery" placeholder="Search..." class="form-control w-full pl-9 pr-3 py-2 text-sm">
+                    <input type="text" v-model="searchQuery" :placeholder="t('search')" class="form-control w-full pl-9 pr-3 py-2 text-sm">
                 </div>
             </div>
 
             <!-- Node List -->
             <div class="flex-1 overflow-y-auto px-2">
                 <div v-if="filteredNodes.length === 0" class="p-4 text-center text-kuma-text text-sm">
-                    No monitors found.
+                    {{ t('no_monitors') }}
                 </div>
                 <div v-for="node in filteredNodes" :key="node.id" 
                      @click="selectNode(node)"
@@ -155,6 +108,18 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Settings / Logout Bottom Bar -->
+            <div class="p-4 border-t border-kuma-border flex justify-between items-center bg-kuma-card">
+                <select v-model="currentLang" @change="changeLang" class="form-control text-xs px-2 py-1 w-24">
+                    <option value="en">English</option>
+                    <option value="ru">Русский</option>
+                </select>
+                <button @click="logout" :title="t('logout')" class="text-kuma-text hover:text-white transition flex items-center gap-2 text-sm">
+                    {{ t('logout') }}
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                </button>
+            </div>
         </aside>
 
         <!-- Main Content -->
@@ -162,7 +127,7 @@
             <div v-if="!selectedNode" class="flex-1 flex items-center justify-center text-kuma-text">
                 <div class="text-center shadow-box big-padding">
                     <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                    <p class="text-lg">Select a monitor from the sidebar</p>
+                    <p class="text-lg">{{ t('select_monitor') }}</p>
                 </div>
             </div>
             
@@ -181,10 +146,10 @@
                     
                     <div class="flex items-center gap-2">
                         <button @click="editNode(selectedNode)" class="btn btn-normal text-sm">
-                            Edit
+                            {{ t('edit') }}
                         </button>
                         <button @click="deleteNode(selectedNode.id)" class="btn btn-danger text-sm">
-                            Delete
+                            {{ t('delete') }}
                         </button>
                     </div>
                 </div>
@@ -193,13 +158,13 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div class="shadow-box big-padding flex items-center gap-5">
                         <div>
-                            <p class="text-kuma-text text-sm mb-1">Total Received Today</p>
+                            <p class="text-kuma-text text-sm mb-1">{{ t('total_rx') }}</p>
                             <p class="text-2xl font-bold text-kuma-primary">{{ formatBytes(todayRx) }}</p>
                         </div>
                     </div>
                     <div class="shadow-box big-padding flex items-center gap-5">
                         <div>
-                            <p class="text-kuma-text text-sm mb-1">Total Transmitted Today</p>
+                            <p class="text-kuma-text text-sm mb-1">{{ t('total_tx') }}</p>
                             <p class="text-2xl font-bold text-blue-400">{{ formatBytes(todayTx) }}</p>
                         </div>
                     </div>
@@ -208,7 +173,7 @@
                 <!-- Chart Card -->
                 <div class="shadow-box big-padding">
                     <h3 class="text-lg font-semibold mb-6 flex items-center gap-2 text-white">
-                        Traffic History (Last 30 Days)
+                        {{ t('traffic_history') }}
                     </h3>
                     <div class="w-full h-80 relative">
                         <canvas id="trafficChart"></canvas>
@@ -217,11 +182,11 @@
             </div>
         </main>
 
-        <!-- Add Node Modal -->
+        <!-- Add/Edit Node Modal -->
         <div v-if="showAddModal" class="fixed inset-0 bg-black/50 backdrop-blur-[3px] flex items-center justify-center z-50 p-4">
             <div class="shadow-box big-padding w-full max-w-md transform transition-all">
                 <div class="flex justify-between items-center mb-5 border-b border-kuma-border pb-3">
-                    <h3 class="text-xl font-bold text-white">{{ isEditMode ? 'Edit Monitor' : 'Add New Monitor' }}</h3>
+                    <h3 class="text-xl font-bold text-white">{{ isEditMode ? t('edit_monitor') : t('add_monitor') }}</h3>
                     <button @click="closeModal" class="text-kuma-text hover:text-white">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
@@ -229,16 +194,16 @@
                 <div>
                     <form @submit.prevent="saveNode">
                         <div class="mb-4">
-                            <label class="block text-sm text-kuma-text mb-1.5">Friendly Name</label>
+                            <label class="block text-sm text-kuma-text mb-1.5">{{ t('friendly_name') }}</label>
                             <input v-model="newNode.name" required type="text" class="form-control w-full px-3 py-2" placeholder="e.g. Web Server">
                         </div>
                         <div class="mb-6">
-                            <label class="block text-sm text-kuma-text mb-1.5">Prometheus URL</label>
+                            <label class="block text-sm text-kuma-text mb-1.5">{{ t('prometheus_url') }}</label>
                             <input v-model="newNode.url" required type="url" class="form-control w-full px-3 py-2" placeholder="https://server.com/metrics">
                         </div>
                         <div class="flex justify-end gap-3 pt-2">
-                            <button type="button" @click="closeModal" class="btn btn-normal">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Save</button>
+                            <button type="button" @click="closeModal" class="btn btn-normal">{{ t('cancel') }}</button>
+                            <button type="submit" class="btn btn-primary">{{ t('save') }}</button>
                         </div>
                     </form>
                 </div>
@@ -248,6 +213,55 @@
 
     <script>
         const { createApp } = Vue
+
+        const translations = {
+            en: {
+                add_monitor: "Add New Monitor",
+                edit_monitor: "Edit Monitor",
+                search: "Search...",
+                no_monitors: "No monitors found.",
+                select_monitor: "Select a monitor from the sidebar",
+                logout: "Logout",
+                edit: "Edit",
+                delete: "Delete",
+                total_rx: "Total Received Today",
+                total_tx: "Total Transmitted Today",
+                traffic_history: "Traffic History (Last 30 Days)",
+                friendly_name: "Friendly Name",
+                prometheus_url: "Prometheus URL",
+                cancel: "Cancel",
+                save: "Save",
+                confirm_delete: "Are you sure you want to delete this node? All history will be lost.",
+                err_fetch: "Failed to fetch nodes",
+                err_save: "Failed to save node:",
+                err_delete: "Failed to delete node",
+                chart_rx: "Download",
+                chart_tx: "Upload",
+            },
+            ru: {
+                add_monitor: "Добавить сервер",
+                edit_monitor: "Редактировать",
+                search: "Поиск...",
+                no_monitors: "Серверы не найдены.",
+                select_monitor: "Выберите сервер из бокового меню",
+                logout: "Выйти",
+                edit: "Изменить",
+                delete: "Удалить",
+                total_rx: "Скачано за сегодня",
+                total_tx: "Отдано за сегодня",
+                traffic_history: "История трафика (за 30 дней)",
+                friendly_name: "Название сервера",
+                prometheus_url: "URL метрик Prometheus",
+                cancel: "Отмена",
+                save: "Сохранить",
+                confirm_delete: "Вы уверены, что хотите удалить этот сервер? Вся история трафика будет потеряна.",
+                err_fetch: "Не удалось получить список серверов",
+                err_save: "Ошибка сохранения:",
+                err_delete: "Ошибка удаления",
+                chart_rx: "Скачивание",
+                chart_tx: "Отдача",
+            }
+        }
 
         createApp({
             data() {
@@ -261,6 +275,7 @@
                     newNode: { name: '', url: '' },
                     chartInstance: null,
                     trafficData: [],
+                    currentLang: localStorage.getItem('traffilk_lang') || 'en'
                 }
             },
             computed: {
@@ -279,9 +294,20 @@
                 }
             },
             mounted() {
+                document.documentElement.lang = this.currentLang
                 this.fetchNodes()
             },
             methods: {
+                t(key) {
+                    return translations[this.currentLang][key] || key
+                },
+                changeLang() {
+                    localStorage.setItem('traffilk_lang', this.currentLang)
+                    document.documentElement.lang = this.currentLang
+                    if (this.chartInstance) {
+                        this.renderChart() // Re-render to update translations in chart
+                    }
+                },
                 formatBytes(bytes, decimals = 2) {
                     if (!+bytes) return '0 Bytes'
                     const k = 1024
@@ -302,7 +328,7 @@
                             this.selectNode(this.nodes[0])
                         }
                     } catch (e) {
-                        console.error('Error fetching nodes:', e)
+                        console.error(this.t('err_fetch'), e)
                     }
                 },
                 closeModal() {
@@ -339,17 +365,16 @@
                         this.closeModal()
                         await this.fetchNodes()
                         
-                        // Update selectedNode if editing the currently selected node
                         if (this.isEditMode && this.selectedNode && this.selectedNode.id === this.editingId) {
                             const updated = this.nodes.find(n => n.id === this.editingId)
                             if (updated) this.selectNode(updated)
                         }
                     } catch (e) {
-                        alert('Failed to save node: ' + e.message)
+                        alert(this.t('err_save') + ' ' + e.message)
                     }
                 },
                 async deleteNode(id) {
-                    if (!confirm('Are you sure you want to delete this node? All history will be lost.')) return
+                    if (!confirm(this.t('confirm_delete'))) return
                     try {
                         const res = await fetch(`../api/nodes/${id}`, { method: 'DELETE' })
                         if (res.status === 401) { window.location.href = '../login'; return; }
@@ -360,7 +385,7 @@
                         }
                         await this.fetchNodes()
                     } catch (e) {
-                        alert('Failed to delete node')
+                        alert(this.t('err_delete'))
                     }
                 },
                 async selectNode(node) {
@@ -396,7 +421,7 @@
                     }
 
                     const labels = this.trafficData.map(d => d.date)
-                    const rxData = this.trafficData.map(d => d.rx_bytes / (1024 * 1024)) // Convert to MB
+                    const rxData = this.trafficData.map(d => d.rx_bytes / (1024 * 1024))
                     const txData = this.trafficData.map(d => d.tx_bytes / (1024 * 1024))
 
                     this.chartInstance = new Chart(ctx, {
@@ -405,7 +430,7 @@
                             labels: labels,
                             datasets: [
                                 {
-                                    label: 'Download (MB)',
+                                    label: this.t('chart_rx') + ' (MB)',
                                     data: rxData,
                                     borderColor: '#5cdd8b',
                                     backgroundColor: 'rgba(92, 221, 139, 0.1)',
@@ -416,7 +441,7 @@
                                     pointBackgroundColor: '#5cdd8b'
                                 },
                                 {
-                                    label: 'Upload (MB)',
+                                    label: this.t('chart_tx') + ' (MB)',
                                     data: txData,
                                     borderColor: '#3b82f6',
                                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
