@@ -16,10 +16,17 @@ curl -sSL https://raw.githubusercontent.com/alexporteb/traefikk/main/install_nod
 ```
 *(Скрипт сам скачает экспортер, настроит системный сервис и запустит его на порту `9100`).*
 
-### Шаг 2: Настройка Nginx
-Теперь нужно сделать так, чтобы Nginx отдавал эти метрики по HTTPS (например, по пути `/metrics`). 
-Откройте конфигурацию вашего сайта в Nginx (например, `/etc/nginx/sites-available/default`) и добавьте следующий блок `location` внутри секции `server { ... }`:
+### (Опционально) Удаление `node_exporter`
+Если вам понадобится полностью удалить `node_exporter` с ноды, выполните эту команду:
 
+```bash
+curl -sSL https://raw.githubusercontent.com/alexporteb/traefikk/main/uninstall_node_exporter.sh | bash
+```
+### Шаг 2: Настройка Reverse Proxy (Nginx или Caddy)
+Теперь нужно сделать так, чтобы сервер отдавал эти метрики по HTTPS (например, по пути `/metrics`). 
+
+**Вариант А: Если вы используете Nginx**
+Откройте конфигурацию вашего сайта (например, `/etc/nginx/sites-available/default`) и добавьте блок `location /metrics` внутри `server { ... }`:
 ```nginx
 server {
     listen 443 ssl;
@@ -30,18 +37,23 @@ server {
     # Проксируем запрос на node_exporter
     location /metrics {
         proxy_pass http://localhost:9100/metrics;
-        
-        # (Опционально) Защита от посторонних. Оставьте только IP главной ноды:
-        # allow 123.123.123.123; # IP главной ноды
-        # deny all;
     }
 }
 ```
+Перезапустите Nginx: `sudo systemctl restart nginx`
 
-Перезапустите Nginx:
-```bash
-sudo systemctl restart nginx
+**Вариант Б: Если вы используете Caddy**
+Откройте ваш `Caddyfile` (обычно в `/etc/caddy/Caddyfile`) и добавьте блок `handle_path`:
+```caddy
+vash-server.com {
+    # ... другие настройки ...
+    
+    handle_path /metrics* {
+        reverse_proxy localhost:9100
+    }
+}
 ```
+Перезапустите Caddy: `sudo systemctl restart caddy`
 
 **Проверка:** Откройте в браузере `https://vash-server.com/metrics`. Вы должны увидеть кучу текста с метриками (в том числе `node_network_receive_bytes_total`).
 
@@ -66,6 +78,27 @@ cd traffilk
 ```bash
 docker compose up -d --build
 ```
+
+### Проксирование Дашборда (Опционально)
+Если вы хотите, чтобы панель открывалась по красивой ссылке (например, `https://main.com/traffilk/`) через ваш Nginx или Caddy, добавьте следующие настройки (они отрезают префикс `/traffilk` и перенаправляют запрос в контейнер):
+
+**Для Nginx:**
+```nginx
+location /traffilk/ {
+    proxy_pass http://localhost:8080/;
+}
+```
+
+**Для Caddy:**
+```caddy
+main.com {
+    # ... другие настройки ...
+    handle_path /traffilk* {
+        reverse_proxy localhost:8080
+    }
+}
+```
+*(Обязательно используйте слэш на конце `https://main.com/traffilk/` при открытии в браузере, чтобы графики загрузились корректно).*
 
 ### Добавление нод в Дашборд
 

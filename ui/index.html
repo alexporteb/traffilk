@@ -173,7 +173,7 @@
                 },
                 async fetchNodes() {
                     try {
-                        const res = await fetch('/api/nodes')
+                        const res = await fetch('api/nodes')
                         this.nodes = await res.json() || []
                     } catch (e) {
                         console.error('Error fetching nodes:', e)
@@ -182,7 +182,7 @@
                 async addNode() {
                     this.newNode.port = parseInt(this.newNode.port)
                     try {
-                        await fetch('/api/nodes', {
+                        await fetch('api/nodes', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(this.newNode)
@@ -197,7 +197,7 @@
                 async deleteNode(id) {
                     if (!confirm('Are you sure you want to delete this server? All traffic history will be lost.')) return
                     try {
-                        await fetch(`/api/nodes/${id}`, { method: 'DELETE' })
+                        await fetch(`api/nodes/${id}`, { method: 'DELETE' })
                         if (this.selectedNode && this.selectedNode.id === id) {
                             this.selectedNode = null
                         }
@@ -214,7 +214,7 @@
                 async fetchTraffic() {
                     if (!this.selectedNode) return
                     try {
-                        const res = await fetch(`/api/nodes/${this.selectedNode.id}/traffic`)
+                        const res = await fetch(`api/nodes/${this.selectedNode.id}/traffic`)
                         this.trafficData = await res.json() || []
                         this.renderChart()
                     } catch (e) {
