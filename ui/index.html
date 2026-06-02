@@ -180,6 +180,9 @@
                     </div>
                     
                     <div class="flex items-center gap-2">
+                        <button @click="editNode(selectedNode)" class="btn btn-normal text-sm">
+                            Edit
+                        </button>
                         <button @click="deleteNode(selectedNode.id)" class="btn btn-danger text-sm">
                             Delete
                         </button>
@@ -218,13 +221,13 @@
         <div v-if="showAddModal" class="fixed inset-0 bg-black/50 backdrop-blur-[3px] flex items-center justify-center z-50 p-4">
             <div class="shadow-box big-padding w-full max-w-md transform transition-all">
                 <div class="flex justify-between items-center mb-5 border-b border-kuma-border pb-3">
-                    <h3 class="text-xl font-bold text-white">Add New Monitor</h3>
-                    <button @click="showAddModal = false" class="text-kuma-text hover:text-white">
+                    <h3 class="text-xl font-bold text-white">{{ isEditMode ? 'Edit Monitor' : 'Add New Monitor' }}</h3>
+                    <button @click="closeModal" class="text-kuma-text hover:text-white">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
                 <div>
-                    <form @submit.prevent="addNode">
+                    <form @submit.prevent="saveNode">
                         <div class="mb-4">
                             <label class="block text-sm text-kuma-text mb-1.5">Friendly Name</label>
                             <input v-model="newNode.name" required type="text" class="form-control w-full px-3 py-2" placeholder="e.g. Web Server">
@@ -234,7 +237,7 @@
                             <input v-model="newNode.url" required type="url" class="form-control w-full px-3 py-2" placeholder="https://server.com/metrics">
                         </div>
                         <div class="flex justify-end gap-3 pt-2">
-                            <button type="button" @click="showAddModal = false" class="btn btn-normal">Cancel</button>
+                            <button type="button" @click="closeModal" class="btn btn-normal">Cancel</button>
                             <button type="submit" class="btn btn-primary">Save</button>
                         </div>
                     </form>
@@ -253,6 +256,8 @@
                     searchQuery: '',
                     selectedNode: null,
                     showAddModal: false,
+                    isEditMode: false,
+                    editingId: null,
                     newNode: { name: '', url: '' },
                     chartInstance: null,
                     trafficData: [],
@@ -300,20 +305,47 @@
                         console.error('Error fetching nodes:', e)
                     }
                 },
-                async addNode() {
+                closeModal() {
+                    this.showAddModal = false
+                    this.isEditMode = false
+                    this.editingId = null
+                    this.newNode = { name: '', url: '' }
+                },
+                editNode(node) {
+                    this.isEditMode = true
+                    this.editingId = node.id
+                    this.newNode = { name: node.name, url: node.url }
+                    this.showAddModal = true
+                },
+                async saveNode() {
                     try {
-                        const res = await fetch('../api/nodes', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(this.newNode)
-                        })
+                        let res;
+                        if (this.isEditMode) {
+                            res = await fetch(`../api/nodes/${this.editingId}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(this.newNode)
+                            })
+                        } else {
+                            res = await fetch('../api/nodes', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(this.newNode)
+                            })
+                        }
+                        
                         if (res.status === 401) { window.location.href = '../login'; return; }
                         
-                        this.showAddModal = false
-                        this.newNode = { name: '', url: '' }
+                        this.closeModal()
                         await this.fetchNodes()
+                        
+                        // Update selectedNode if editing the currently selected node
+                        if (this.isEditMode && this.selectedNode && this.selectedNode.id === this.editingId) {
+                            const updated = this.nodes.find(n => n.id === this.editingId)
+                            if (updated) this.selectNode(updated)
+                        }
                     } catch (e) {
-                        alert('Failed to add node: ' + e.message)
+                        alert('Failed to save node: ' + e.message)
                     }
                 },
                 async deleteNode(id) {

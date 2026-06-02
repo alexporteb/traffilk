@@ -96,6 +96,13 @@ func AddNode(n Node) error {
 	return err
 }
 
+// UpdateNode updates an existing node
+func UpdateNode(id int, name, url string) error {
+	_, err := DB.Exec("UPDATE nodes SET name = ?, url = ? WHERE id = ?",
+		name, url, id)
+	return err
+}
+
 // DeleteNode removes a node
 func DeleteNode(id int) error {
 	_, err := DB.Exec("DELETE FROM nodes WHERE id = ?", id)

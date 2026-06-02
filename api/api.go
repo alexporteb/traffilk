@@ -43,6 +43,7 @@ func SetupRouter() *gin.Engine {
 	{
 		api.GET("/nodes", getNodes)
 		api.POST("/nodes", addNode)
+		api.PUT("/nodes/:id", updateNode)
 		api.DELETE("/nodes/:id", deleteNode)
 		api.GET("/nodes/:id/traffic", getNodeTraffic)
 	}
@@ -94,6 +95,32 @@ func deleteNode(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
+func updateNode(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+		return
+	}
+
+	var node db.Node
+	if err := c.ShouldBindJSON(&node); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err = db.UpdateNode(id, node.Name, node.URL)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	
+	// Trigger immediate poll if URL changed
+	go scheduler.PollAllNodes()
+
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
