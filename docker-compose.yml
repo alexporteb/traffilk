@@ -11,3 +11,9 @@ services:
       - ./data:/app/data
     environment:
       - TZ=UTC
+    networks:
+      - remnawave-network
+
+networks:
+  remnawave-network:
+    external: true
