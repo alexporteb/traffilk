@@ -8,48 +8,19 @@
 
 На каждом сервере, трафик которого мы хотим отслеживать, нужно установить `node_exporter`, чтобы он собирал сетевую статистику, и настроить Nginx для проксирования этих метрик по HTTPS.
 
-### Шаг 1: Установка `node_exporter`
-Выполните эти команды на целевом сервере (например, Ubuntu/Debian):
+### Шаг 1: Установка `node_exporter` (в одну команду)
+Выполните этот блок команд на целевом сервере (просто скопируйте и вставьте всё целиком в терминал):
 
 ```bash
-# Скачиваем и распаковываем
-wget https://github.com/prometheus/node_exporter/releases/download/v1.6.1/node_exporter-1.6.1.linux-amd64.tar.gz
-tar xvfz node_exporter-*.*-amd64.tar.gz
-
-# Перемещаем бинарник в /usr/local/bin
-sudo mv node_exporter-*.*-amd64/node_exporter /usr/local/bin/
-rm -rf node_exporter-*.*-amd64*
-
-# Создаем системного пользователя
-sudo useradd -rs /bin/false node_exporter
-
-# Создаем Systemd-сервис
-sudo nano /etc/systemd/system/node_exporter.service
+wget -qO- https://github.com/prometheus/node_exporter/releases/download/v1.6.1/node_exporter-1.6.1.linux-amd64.tar.gz | tar xvz && \
+sudo mv node_exporter-1.6.1.linux-amd64/node_exporter /usr/local/bin/ && \
+rm -rf node_exporter-1.6.1.linux-amd64 && \
+sudo id -u node_exporter &>/dev/null || sudo useradd -rs /bin/false node_exporter && \
+echo -e "[Unit]\nDescription=Node Exporter\nAfter=network.target\n\n[Service]\nUser=node_exporter\nGroup=node_exporter\nType=simple\nExecStart=/usr/local/bin/node_exporter\n\n[Install]\nWantedBy=multi-user.target" | sudo tee /etc/systemd/system/node_exporter.service > /dev/null && \
+sudo systemctl daemon-reload && \
+sudo systemctl enable --now node_exporter
 ```
-
-Вставьте в файл следующее содержимое:
-```ini
-[Unit]
-Description=Node Exporter
-After=network.target
-
-[Service]
-User=node_exporter
-Group=node_exporter
-Type=simple
-ExecStart=/usr/local/bin/node_exporter
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Сохраните и запустите сервис:
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable node_exporter
-sudo systemctl start node_exporter
-```
-*(Теперь экспортер работает локально на порту `9100`).*
+*(Теперь экспортер установлен как системный сервис и работает локально на порту `9100`).*
 
 ### Шаг 2: Настройка Nginx
 Теперь нужно сделать так, чтобы Nginx отдавал эти метрики по HTTPS (например, по пути `/metrics`). 
