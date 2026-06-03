@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   traffilk:
-    image: ghcr.io/alexporteb/traefikk:latest
+    image: ghcr.io/alexporteb/traffilk:latest
     container_name: traffilk
     restart: unless-stopped
     ports:

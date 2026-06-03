@@ -22,8 +22,8 @@ Traffilk подключается к вашим серверам с метрик
 
 1. Склонируйте репозиторий:
    ```bash
-   git clone https://github.com/alexporteb/traefikk.git
-   cd traefikk
+   git clone https://github.com/alexporteb/Traffilk.git
+   cd traffilk
    ```
 
 2. Откройте `docker-compose.yml` и задайте свои логин и пароль в секции `environment`:
@@ -90,12 +90,12 @@ server {
 
 **Установка:**
 ```bash
-curl -sL https://raw.githubusercontent.com/alexporteb/traefikk/main/install_node_exporter.sh | bash
+curl -sL https://raw.githubusercontent.com/alexporteb/Traffilk/main/install_node_exporter.sh | bash
 ```
 
 **Удаление:**
 ```bash
-curl -sL https://raw.githubusercontent.com/alexporteb/traefikk/main/uninstall_node_exporter.sh | bash
+curl -sL https://raw.githubusercontent.com/alexporteb/Traffilk/main/uninstall_node_exporter.sh | bash
 ```
 
 После установки метрики будут доступны по адресу `http://<IP_ЭТОГО_СЕРВЕРА>:9100/metrics`.
@@ -156,8 +156,8 @@ V2 features a completely redesigned user interface (inspired by Uptime Kuma) and
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/alexporteb/traefikk.git
-   cd traefikk
+   git clone https://github.com/alexporteb/Traffilk.git
+   cd traffilk
    ```
 
 2. Open `docker-compose.yml` and modify the environment variables to set your admin credentials:
@@ -221,12 +221,12 @@ SSH into your **remote** server and run:
 
 **Install:**
 ```bash
-curl -sL https://raw.githubusercontent.com/alexporteb/traefikk/main/install_node_exporter.sh | bash
+curl -sL https://raw.githubusercontent.com/alexporteb/Traffilk/main/install_node_exporter.sh | bash
 ```
 
 **Uninstall:**
 ```bash
-curl -sL https://raw.githubusercontent.com/alexporteb/traefikk/main/uninstall_node_exporter.sh | bash
+curl -sL https://raw.githubusercontent.com/alexporteb/Traffilk/main/uninstall_node_exporter.sh | bash
 ```
 
 Once installed, metrics will be available at `http://<NODE_IP>:9100/metrics`.
