@@ -71,6 +71,10 @@ func createTables() {
 	if err != nil {
 		log.Fatal("Failed to create traffic_logs table:", err)
 	}
+
+	// Performance indexes
+	DB.Exec("CREATE INDEX IF NOT EXISTS idx_traffic_node_timestamp ON traffic_logs(node_id, timestamp)")
+	DB.Exec("CREATE INDEX IF NOT EXISTS idx_nodes_status ON nodes(status)")
 }
 
 // GetNodes returns all nodes
