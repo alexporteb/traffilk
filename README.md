@@ -84,16 +84,30 @@ server {
 
 ### 🖥️ Настройка других нод (Серверов)
 
-Чтобы Traffilk мог собирать статистику с других ваших серверов, на них должен работать `node_exporter`. Мы подготовили скрипт для быстрой установки.
+Чтобы собирать статистику с других серверов, установите на них `node_exporter` одной быстрой командой.
 
-Зайдите на **другой** сервер (с которого хотите собирать трафик) и выполните:
+Зайдите на **удалённый** сервер по SSH и выполните:
+
+**Установка:**
 ```bash
-wget https://raw.githubusercontent.com/alexporteb/traefikk/main/install_node_exporter.sh
-chmod +x install_node_exporter.sh
-./install_node_exporter.sh
+curl -sL https://raw.githubusercontent.com/alexporteb/traefikk/main/install_node_exporter.sh | bash
 ```
+
+**Удаление:**
+```bash
+curl -sL https://raw.githubusercontent.com/alexporteb/traefikk/main/uninstall_node_exporter.sh | bash
+```
+
 После установки метрики будут доступны по адресу `http://<IP_ЭТОГО_СЕРВЕРА>:9100/metrics`.
-Добавьте этот URL в панели Traffilk (кнопка "Добавить сервер").
+
+#### Защита метрик через Caddy (Рекомендуется)
+Оставлять порт 9100 открытым по HTTP небезопасно. Рекомендуется спрятать его за обратным прокси на удалённой ноде, чтобы получить защищенный HTTPS-доступ:
+```caddyfile
+node1.yourdomain.com {
+    reverse_proxy localhost:9100
+}
+```
+После этого добавьте эту безопасную ссылку в панели Traffilk: `https://node1.yourdomain.com/metrics`.
 
 *Примечание: При первом добавлении график покажет 0 байт, так как для расчета дневного трафика системе нужно подождать 1 минуту и сделать второй замер.*
 
@@ -178,15 +192,29 @@ server {
 
 ### 🖥️ Setting Up Remote Nodes
 
-For Traffilk to monitor other servers, you need to install `node_exporter` on them. You can use the provided quick installation script.
+For Traffilk to monitor other servers, install `node_exporter` using our quick 1-line script.
 
 SSH into your **remote** server and run:
+
+**Install:**
 ```bash
-wget https://raw.githubusercontent.com/alexporteb/traefikk/main/install_node_exporter.sh
-chmod +x install_node_exporter.sh
-./install_node_exporter.sh
+curl -sL https://raw.githubusercontent.com/alexporteb/traefikk/main/install_node_exporter.sh | bash
 ```
+
+**Uninstall:**
+```bash
+curl -sL https://raw.githubusercontent.com/alexporteb/traefikk/main/uninstall_node_exporter.sh | bash
+```
+
 Once installed, metrics will be available at `http://<NODE_IP>:9100/metrics`.
-Go to your Traffilk dashboard and add this URL via the "Add New Monitor" button.
+
+#### Securing Metrics with Caddy (Recommended)
+Exposing port 9100 directly over HTTP is insecure. It's recommended to proxy it through Caddy on your remote node to get automatic HTTPS:
+```caddyfile
+node1.yourdomain.com {
+    reverse_proxy localhost:9100
+}
+```
+Then, add the node in Traffilk using the secure URL: `https://node1.yourdomain.com/metrics`.
 
 *Note: The chart will initially show 0 bytes for a new node. Traffilk requires at least 1 minute to take a second measurement and calculate the daily traffic delta.*
