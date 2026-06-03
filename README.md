@@ -22,7 +22,7 @@ Traffilk подключается к вашим серверам с метрик
 
 1. Склонируйте репозиторий:
    ```bash
-   git clone https://github.com/alexporteb/Traffilk.git
+   git clone https://github.com/alexporteb/traffilk.git
    cd traffilk
    ```
 
@@ -90,12 +90,12 @@ server {
 
 **Установка:**
 ```bash
-curl -sL https://raw.githubusercontent.com/alexporteb/Traffilk/main/install_node_exporter.sh | bash
+curl -sL https://raw.githubusercontent.com/alexporteb/traffilk/main/install_node_exporter.sh | bash
 ```
 
 **Удаление:**
 ```bash
-curl -sL https://raw.githubusercontent.com/alexporteb/Traffilk/main/uninstall_node_exporter.sh | bash
+curl -sL https://raw.githubusercontent.com/alexporteb/traffilk/main/uninstall_node_exporter.sh | bash
 ```
 
 После установки метрики будут доступны по адресу `http://<IP_ЭТОГО_СЕРВЕРА>:9100/metrics`.
@@ -156,7 +156,7 @@ V2 features a completely redesigned user interface (inspired by Uptime Kuma) and
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/alexporteb/Traffilk.git
+   git clone https://github.com/alexporteb/traffilk.git
    cd traffilk
    ```
 
@@ -221,12 +221,12 @@ SSH into your **remote** server and run:
 
 **Install:**
 ```bash
-curl -sL https://raw.githubusercontent.com/alexporteb/Traffilk/main/install_node_exporter.sh | bash
+curl -sL https://raw.githubusercontent.com/alexporteb/traffilk/main/install_node_exporter.sh | bash
 ```
 
 **Uninstall:**
 ```bash
-curl -sL https://raw.githubusercontent.com/alexporteb/Traffilk/main/uninstall_node_exporter.sh | bash
+curl -sL https://raw.githubusercontent.com/alexporteb/traffilk/main/uninstall_node_exporter.sh | bash
 ```
 
 Once installed, metrics will be available at `http://<NODE_IP>:9100/metrics`.
