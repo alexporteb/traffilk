@@ -161,7 +161,7 @@
                     this.error = ''
                     this.loading = true
                     try {
-                        const res = await fetch('../api/login', {
+                        const res = await fetch('api/login', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -171,7 +171,7 @@
                         })
 
                         if (res.ok) {
-                            window.location.href = '../ui/'
+                            window.location.href = 'ui/'
                         } else {
                             this.error = this.t('err_creds')
                         }
