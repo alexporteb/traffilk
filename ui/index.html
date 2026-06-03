@@ -170,17 +170,45 @@
                 </div>
 
                 <!-- Stats Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div class="shadow-box big-padding flex items-center gap-5">
-                        <div>
-                            <p class="text-kuma-text text-sm mb-1">{{ t('total_rx') }}</p>
-                            <p class="text-2xl font-bold text-kuma-primary">{{ formatBytes(todayRx) }}</p>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mb-6">
+                    <!-- Today -->
+                    <div class="shadow-box p-4 text-center">
+                        <p class="text-kuma-text text-xs md:text-sm font-semibold mb-2 uppercase">{{ t('today') }}</p>
+                        <div class="flex flex-col gap-1">
+                            <div class="text-kuma-primary text-sm font-bold flex justify-between"><span>{{ t('rx_short') }}:</span> <span>{{ formatBytes(stats.today.rx, 1) }}</span></div>
+                            <div class="text-blue-400 text-sm font-bold flex justify-between"><span>{{ t('tx_short') }}:</span> <span>{{ formatBytes(stats.today.tx, 1) }}</span></div>
                         </div>
                     </div>
-                    <div class="shadow-box big-padding flex items-center gap-5">
-                        <div>
-                            <p class="text-kuma-text text-sm mb-1">{{ t('total_tx') }}</p>
-                            <p class="text-2xl font-bold text-blue-400">{{ formatBytes(todayTx) }}</p>
+                    <!-- Week -->
+                    <div class="shadow-box p-4 text-center">
+                        <p class="text-kuma-text text-xs md:text-sm font-semibold mb-2 uppercase">{{ t('this_week') }}</p>
+                        <div class="flex flex-col gap-1">
+                            <div class="text-kuma-primary text-sm font-bold flex justify-between"><span>{{ t('rx_short') }}:</span> <span>{{ formatBytes(stats.week.rx, 1) }}</span></div>
+                            <div class="text-blue-400 text-sm font-bold flex justify-between"><span>{{ t('tx_short') }}:</span> <span>{{ formatBytes(stats.week.tx, 1) }}</span></div>
+                        </div>
+                    </div>
+                    <!-- Month -->
+                    <div class="shadow-box p-4 text-center">
+                        <p class="text-kuma-text text-xs md:text-sm font-semibold mb-2 uppercase">{{ t('this_month') }}</p>
+                        <div class="flex flex-col gap-1">
+                            <div class="text-kuma-primary text-sm font-bold flex justify-between"><span>{{ t('rx_short') }}:</span> <span>{{ formatBytes(stats.month.rx, 1) }}</span></div>
+                            <div class="text-blue-400 text-sm font-bold flex justify-between"><span>{{ t('tx_short') }}:</span> <span>{{ formatBytes(stats.month.tx, 1) }}</span></div>
+                        </div>
+                    </div>
+                    <!-- Year -->
+                    <div class="shadow-box p-4 text-center">
+                        <p class="text-kuma-text text-xs md:text-sm font-semibold mb-2 uppercase">{{ t('this_year') }}</p>
+                        <div class="flex flex-col gap-1">
+                            <div class="text-kuma-primary text-sm font-bold flex justify-between"><span>{{ t('rx_short') }}:</span> <span>{{ formatBytes(stats.year.rx, 1) }}</span></div>
+                            <div class="text-blue-400 text-sm font-bold flex justify-between"><span>{{ t('tx_short') }}:</span> <span>{{ formatBytes(stats.year.tx, 1) }}</span></div>
+                        </div>
+                    </div>
+                    <!-- All Time -->
+                    <div class="shadow-box p-4 text-center col-span-2 md:col-span-1">
+                        <p class="text-kuma-text text-xs md:text-sm font-semibold mb-2 uppercase">{{ t('all_time') }}</p>
+                        <div class="flex flex-col gap-1">
+                            <div class="text-kuma-primary text-sm font-bold flex justify-between"><span>{{ t('rx_short') }}:</span> <span>{{ formatBytes(stats.all.rx, 1) }}</span></div>
+                            <div class="text-blue-400 text-sm font-bold flex justify-between"><span>{{ t('tx_short') }}:</span> <span>{{ formatBytes(stats.all.tx, 1) }}</span></div>
                         </div>
                     </div>
                 </div>
@@ -252,6 +280,13 @@
                 err_delete: "Failed to delete node",
                 chart_rx: "Download",
                 chart_tx: "Upload",
+                today: "Today",
+                this_week: "Last 7 Days",
+                this_month: "This Month",
+                this_year: "This Year",
+                all_time: "All Time",
+                rx_short: "RX",
+                tx_short: "TX",
             },
             ru: {
                 add_monitor: "Добавить сервер",
@@ -275,6 +310,13 @@
                 err_delete: "Ошибка удаления",
                 chart_rx: "Скачивание",
                 chart_tx: "Отдача",
+                today: "Сегодня",
+                this_week: "За 7 дней",
+                this_month: "Этот месяц",
+                this_year: "Этот год",
+                all_time: "Всё время",
+                rx_short: "Скач.",
+                tx_short: "Отд.",
             }
         }
 
@@ -302,13 +344,45 @@
                     const q = this.searchQuery.toLowerCase();
                     return this.nodes.filter(n => n.name.toLowerCase().includes(q) || n.url.toLowerCase().includes(q));
                 },
-                todayRx() {
-                    if (!this.trafficData || this.trafficData.length === 0) return 0;
-                    return this.trafficData[this.trafficData.length - 1].rx_bytes || 0;
-                },
-                todayTx() {
-                    if (!this.trafficData || this.trafficData.length === 0) return 0;
-                    return this.trafficData[this.trafficData.length - 1].tx_bytes || 0;
+                stats() {
+                    const res = {
+                        today: {rx: 0, tx: 0},
+                        week: {rx: 0, tx: 0},
+                        month: {rx: 0, tx: 0},
+                        year: {rx: 0, tx: 0},
+                        all: {rx: 0, tx: 0}
+                    };
+                    if (!this.trafficData || this.trafficData.length === 0) return res;
+                    
+                    const now = new Date();
+                    const todayStr = now.toISOString().split('T')[0];
+                    const currentMonth = todayStr.substring(0, 7);
+                    const currentYear = todayStr.substring(0, 4);
+                    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    
+                    for (const d of this.trafficData) {
+                        res.all.rx += d.rx_bytes;
+                        res.all.tx += d.tx_bytes;
+                        
+                        if (d.date === todayStr) {
+                            res.today.rx += d.rx_bytes;
+                            res.today.tx += d.tx_bytes;
+                        }
+                        if (d.date.startsWith(currentMonth)) {
+                            res.month.rx += d.rx_bytes;
+                            res.month.tx += d.tx_bytes;
+                        }
+                        if (d.date.startsWith(currentYear)) {
+                            res.year.rx += d.rx_bytes;
+                            res.year.tx += d.tx_bytes;
+                        }
+                        const rowDate = new Date(d.date);
+                        if (rowDate >= sevenDaysAgo) {
+                            res.week.rx += d.rx_bytes;
+                            res.week.tx += d.tx_bytes;
+                        }
+                    }
+                    return res;
                 }
             },
             mounted() {
