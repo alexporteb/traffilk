@@ -15,6 +15,7 @@ func SetupRouter() *gin.Engine {
 
 	// Unprotected routes
 	r.StaticFile("/login", "./ui/login.html")
+	r.StaticFile("/favicon.ico", "./ui/logo.png")
 	r.POST("/api/login", LoginHandler)
 	r.POST("/api/logout", LogoutHandler)
 
