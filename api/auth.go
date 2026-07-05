@@ -1,6 +1,7 @@
 package api
 
 import (
+	"crypto/rand"
 	"net/http"
 	"os"
 	"time"
@@ -9,7 +10,17 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtKey = []byte(getEnv("JWT_SECRET", "super-secret-default-key"))
+func initJwtKey() []byte {
+	key := getEnv("JWT_SECRET", "")
+	if key != "" {
+		return []byte(key)
+	}
+	b := make([]byte, 32)
+	rand.Read(b)
+	return b
+}
+
+var jwtKey = initJwtKey()
 var adminUser = getEnv("ADMIN_USER", "admin")
 var adminPass = getEnv("ADMIN_PASS", "admin")
 
@@ -59,12 +70,14 @@ func LoginHandler(c *gin.Context) {
 	}
 
 	// Set cookie (valid for 24 hours, path / so it applies to /traffilk/ as well if stripped)
+	c.SetSameSite(http.SameSiteStrictMode)
 	c.SetCookie("token", tokenString, int(24*time.Hour.Seconds()), "/", "", false, true)
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
 // LogoutHandler handles POST /api/logout
 func LogoutHandler(c *gin.Context) {
+	c.SetSameSite(http.SameSiteStrictMode)
 	c.SetCookie("token", "", -1, "/", "", false, true)
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }

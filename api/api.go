@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"net/url"
 	"strconv"
 	"traffilk/db"
 	"traffilk/scheduler"
@@ -14,7 +15,6 @@ func SetupRouter() *gin.Engine {
 
 	// Unprotected routes
 	r.StaticFile("/login", "./ui/login.html")
-	r.StaticFile("/logo.png", "./ui/logo.png")
 	r.POST("/api/login", LoginHandler)
 	r.POST("/api/logout", LogoutHandler)
 
@@ -71,15 +71,20 @@ func addNode(c *gin.Context) {
 		return
 	}
 
+	if !isValidNodeURL(node.URL) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid URL or blocked internal IP (SSRF Protection)"})
+		return
+	}
+
 	err := db.AddNode(node)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	
+
 	// Trigger an immediate poll so the user doesn't have to wait for the next cron job
 	go scheduler.PollAllNodes()
-	
+
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
@@ -113,12 +118,17 @@ func updateNode(c *gin.Context) {
 		return
 	}
 
+	if !isValidNodeURL(node.URL) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid URL or blocked internal IP (SSRF Protection)"})
+		return
+	}
+
 	err = db.UpdateNode(id, node.Name, node.URL)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	
+
 	// Trigger immediate poll if URL changed
 	go scheduler.PollAllNodes()
 
@@ -142,4 +152,20 @@ func getNodeTraffic(c *gin.Context) {
 		daily = []db.DailyTraffic{}
 	}
 	c.JSON(http.StatusOK, daily)
+}
+
+// isValidNodeURL checks if the URL is valid and mitigates basic SSRF targeting cloud metadata
+func isValidNodeURL(u string) bool {
+	parsed, err := url.ParseRequestURI(u)
+	if err != nil {
+		return false
+	}
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return false
+	}
+	// Block AWS/GCP/Azure cloud metadata IPs
+	if parsed.Hostname() == "169.254.169.254" || parsed.Hostname() == "169.254.169.253" || parsed.Hostname() == "metadata.google.internal" {
+		return false
+	}
+	return true
 }
