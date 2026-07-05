@@ -22,6 +22,12 @@ func SetupRouter() *gin.Engine {
 	r.Use(func(c *gin.Context) {
 		path := c.Request.URL.Path
 		if path == "/ui" || (len(path) >= 4 && path[:4] == "/ui/") {
+			// Allow public access to static assets required for login page
+			if len(path) >= 11 && path[:11] == "/ui/assets/" {
+				c.Next()
+				return
+			}
+			
 			_, err := c.Cookie("token")
 			if err != nil {
 				c.Header("Location", "../login")
