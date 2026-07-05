@@ -23,7 +23,7 @@ func SetupRouter() *gin.Engine {
 		path := c.Request.URL.Path
 		if path == "/ui" || (len(path) >= 4 && path[:4] == "/ui/") {
 			// Allow public access to static assets required for login page
-			if len(path) >= 11 && path[:11] == "/ui/assets/" {
+			if (len(path) >= 11 && path[:11] == "/ui/assets/") || path == "/ui/logo.png" {
 				c.Next()
 				return
 			}
