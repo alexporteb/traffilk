@@ -50,73 +50,78 @@ func PollAllNodes() {
 	}
 
 	for _, node := range nodes {
-		metrics, err := scraper.ReadAllMetrics(node.URL)
-		if err != nil {
-			log.Printf("Error polling node %s (%s): %v\n", node.Name, node.URL, err)
-			db.UpdateNodeStatus(node.ID, "down")
-			db.UpdateNodeTrafficStats(node.ID, 0, 0, 0)
-			// Zero out system metrics when node is down
-			db.UpdateNodeSystemMetrics(node.ID, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-			continue
-		}
-
-		prevLog, _ := db.GetLatestTrafficLog(node.ID)
-
-		err = db.AddTrafficLog(node.ID, metrics.RxBytes, metrics.TxBytes)
-		if err != nil {
-			log.Printf("Error saving traffic log for node %s: %v\n", node.Name, err)
-		} else {
-			db.UpdateNodeStatus(node.ID, "up")
-			log.Printf("Successfully polled node %s: RX %d, TX %d\n", node.Name, metrics.RxBytes, metrics.TxBytes)
-
-			var rxSpeed, txSpeed, addUsedBytes int64
-			if prevLog != nil {
-				deltaRx := metrics.RxBytes - prevLog.RxBytes
-				deltaTx := metrics.TxBytes - prevLog.TxBytes
-				if deltaRx < 0 {
-					deltaRx = metrics.RxBytes
-				}
-				if deltaTx < 0 {
-					deltaTx = metrics.TxBytes
-				}
-
-				seconds := int64(time.Since(prevLog.Timestamp).Seconds())
-				if seconds <= 0 {
-					seconds = 1
-				}
-
-				rxSpeed = deltaRx / seconds
-				txSpeed = deltaTx / seconds
-				addUsedBytes = deltaRx + deltaTx
-			}
-			db.UpdateNodeTrafficStats(node.ID, addUsedBytes, rxSpeed, txSpeed)
-		}
-
-		// Calculate CPU percentage from deltas
-		cpuPercent := calculateCPUPercent(node.ID, metrics.CpuIdleTotal, metrics.CpuTotal)
-
-		// Calculate memory used
-		memUsed := metrics.MemTotalBytes - metrics.MemAvailBytes
-		if memUsed < 0 {
-			memUsed = 0
-		}
-
-		// Update system metrics
-		db.UpdateNodeSystemMetrics(
-			node.ID,
-			cpuPercent,
-			metrics.LoadAvg1,
-			metrics.LoadAvg5,
-			metrics.LoadAvg15,
-			metrics.MemTotalBytes,
-			memUsed,
-			metrics.UptimeSeconds(),
-			metrics.NetDropsRx,
-			metrics.NetDropsTx,
-			metrics.FileDescriptors,
-		)
+		PollNode(node)
 	}
 	log.Println("Polling complete.")
+}
+
+// PollNode fetches metrics for a single node and updates the database
+func PollNode(node db.Node) {
+	metrics, err := scraper.ReadAllMetrics(node.URL)
+	if err != nil {
+		log.Printf("Error polling node %s (%s): %v\n", node.Name, node.URL, err)
+		db.UpdateNodeStatus(node.ID, "down")
+		db.UpdateNodeTrafficStats(node.ID, 0, 0, 0)
+		// Zero out system metrics when node is down
+		db.UpdateNodeSystemMetrics(node.ID, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+		return
+	}
+
+	prevLog, _ := db.GetLatestTrafficLog(node.ID)
+
+	err = db.AddTrafficLog(node.ID, metrics.RxBytes, metrics.TxBytes)
+	if err != nil {
+		log.Printf("Error saving traffic log for node %s: %v\n", node.Name, err)
+	} else {
+		db.UpdateNodeStatus(node.ID, "up")
+		log.Printf("Successfully polled node %s: RX %d, TX %d\n", node.Name, metrics.RxBytes, metrics.TxBytes)
+
+		var rxSpeed, txSpeed, addUsedBytes int64
+		if prevLog != nil {
+			deltaRx := metrics.RxBytes - prevLog.RxBytes
+			deltaTx := metrics.TxBytes - prevLog.TxBytes
+			if deltaRx < 0 {
+				deltaRx = metrics.RxBytes
+			}
+			if deltaTx < 0 {
+				deltaTx = metrics.TxBytes
+			}
+
+			seconds := int64(time.Since(prevLog.Timestamp).Seconds())
+			if seconds <= 0 {
+				seconds = 1
+			}
+
+			rxSpeed = deltaRx / seconds
+			txSpeed = deltaTx / seconds
+			addUsedBytes = deltaRx + deltaTx
+		}
+		db.UpdateNodeTrafficStats(node.ID, addUsedBytes, rxSpeed, txSpeed)
+	}
+
+	// Calculate CPU percentage from deltas
+	cpuPercent := calculateCPUPercent(node.ID, metrics.CpuIdleTotal, metrics.CpuTotal)
+
+	// Calculate memory used
+	memUsed := metrics.MemTotalBytes - metrics.MemAvailBytes
+	if memUsed < 0 {
+		memUsed = 0
+	}
+
+	// Update system metrics
+	db.UpdateNodeSystemMetrics(
+		node.ID,
+		cpuPercent,
+		metrics.LoadAvg1,
+		metrics.LoadAvg5,
+		metrics.LoadAvg15,
+		metrics.MemTotalBytes,
+		memUsed,
+		metrics.UptimeSeconds(),
+		metrics.NetDropsRx,
+		metrics.NetDropsTx,
+		metrics.FileDescriptors,
+	)
 }
 
 // calculateCPUPercent computes CPU usage percentage from cumulative counters.

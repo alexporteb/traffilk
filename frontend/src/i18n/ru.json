@@ -27,7 +27,8 @@
     "tx": "Отд.",
     "trafficHistory": "История трафика (за 30 дней)",
     "download": "Скачивание",
-    "upload": "Отдача"
+    "upload": "Отдача",
+    "pollSuccess": "Опрос сервера запущен"
   },
   "metrics": {
     "cpu": "CPU",

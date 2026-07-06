@@ -78,6 +78,8 @@ export const deleteNode = (id: number) =>
   request<{ status: string }>(`/nodes/${id}`, { method: 'DELETE' });
 export const getNodeTraffic = (id: number) =>
   request<DailyTraffic[]>(`/nodes/${id}/traffic`);
+export const pollNode = (id: number) =>
+  request<{ status: string }>(`/nodes/${id}/poll`, { method: 'POST' });
 
 // Tokens
 export const getTokens = () => request<APIToken[]>('/tokens');

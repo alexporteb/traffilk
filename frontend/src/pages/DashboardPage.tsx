@@ -3,7 +3,7 @@ import { AppShell, Box, Group, Title, ActionIcon, Stack, Button, Text, TextInput
 
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
-import { TbTrash, TbEdit, TbInfoCircle } from 'react-icons/tb';
+import { TbTrash, TbEdit, TbInfoCircle, TbRefresh } from 'react-icons/tb';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
@@ -12,7 +12,7 @@ import { SystemMetrics } from '../components/SystemMetrics';
 import { TrafficChart } from '../components/TrafficChart';
 import { TokensModal } from '../components/TokensModal';
 
-import { getNodes, addNode, updateNode, deleteNode, getNodeTraffic } from '../api/client';
+import { getNodes, addNode, updateNode, deleteNode, getNodeTraffic, pollNode } from '../api/client';
 
 export default function DashboardPage() {
   const { t } = useTranslation();
@@ -63,6 +63,18 @@ export default function DashboardPage() {
       setSelectedId(null);
       modals.closeAll();
       notifications.show({ title: t('common.success'), message: 'Node deleted', color: 'teal' });
+    },
+  });
+
+  const pollMutation = useMutation({
+    mutationFn: pollNode,
+    onSuccess: () => {
+      notifications.show({ title: t('common.success'), message: t('dashboard.pollSuccess', 'Node refresh triggered'), color: 'teal' });
+      // Invalidate after a short delay to give the backend time to poll
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ['nodes'] }), 2000);
+    },
+    onError: (err: any) => {
+      notifications.show({ title: t('common.error'), message: err.message, color: 'red' });
     },
   });
 
@@ -158,6 +170,9 @@ export default function DashboardPage() {
                   <Text c="dimmed" size="sm" mt={4}>{selectedNode.url}</Text>
                 </Box>
                 <Group>
+                  <ActionIcon variant="light" color="blue" size="lg" onClick={() => pollMutation.mutate(selectedNode.id)} loading={pollMutation.isPending}>
+                    <TbRefresh size={20} />
+                  </ActionIcon>
                   <ActionIcon variant="light" color="cyan" size="lg" onClick={() => openNodeModal(selectedNode)}>
                     <TbEdit size={20} />
                   </ActionIcon>

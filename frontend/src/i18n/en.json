@@ -27,7 +27,8 @@
     "tx": "TX",
     "trafficHistory": "Traffic History (Last 30 Days)",
     "download": "Download",
-    "upload": "Upload"
+    "upload": "Upload",
+    "pollSuccess": "Node refresh triggered"
   },
   "metrics": {
     "cpu": "CPU",

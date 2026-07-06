@@ -46,6 +46,7 @@ func SetupRouter() *gin.Engine {
 		api.PUT("/nodes/:id", updateNode)
 		api.DELETE("/nodes/:id", deleteNode)
 		api.GET("/nodes/:id/traffic", getNodeTraffic)
+		api.POST("/nodes/:id/poll", pollNode)
 
 		api.GET("/tokens", getTokens)
 		api.POST("/tokens", createToken)
@@ -236,6 +237,39 @@ func getNodeTraffic(c *gin.Context) {
 		daily = []db.DailyTraffic{}
 	}
 	c.JSON(http.StatusOK, daily)
+}
+
+func pollNode(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+		return
+	}
+
+	nodes, err := db.GetNodes()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var targetNode *db.Node
+	for _, n := range nodes {
+		if n.ID == id {
+			targetNode = &n
+			break
+		}
+	}
+
+	if targetNode == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Node not found"})
+		return
+	}
+
+	// Run in background to not block the request
+	go scheduler.PollNode(*targetNode)
+
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
 // isValidNodeURL checks if the URL is valid and mitigates basic SSRF targeting cloud metadata
