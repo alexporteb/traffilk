@@ -37,6 +37,7 @@
     "uptime": "Аптайм",
     "netDrops": "Потери сети",
     "fileDescriptors": "Дескрипторы",
+    "tcpConnections": "TCP-соединения",
     "speed": "Скорость",
     "rxSpeed": "Скорость скач.",
     "txSpeed": "Скорость отд.",

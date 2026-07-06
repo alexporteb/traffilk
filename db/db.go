@@ -31,6 +31,7 @@ type Node struct {
 	NetDropsRx              int64   `json:"netDropsRx"`
 	NetDropsTx              int64   `json:"netDropsTx"`
 	FileDescriptors         int64   `json:"fileDescriptors"`
+	TcpConnections          int64   `json:"tcpConnections"`
 }
 
 type TrafficLog struct {
@@ -108,6 +109,7 @@ func createTables() {
 		"ALTER TABLE nodes ADD COLUMN net_drops_rx INTEGER DEFAULT 0",
 		"ALTER TABLE nodes ADD COLUMN net_drops_tx INTEGER DEFAULT 0",
 		"ALTER TABLE nodes ADD COLUMN file_descriptors INTEGER DEFAULT 0",
+		"ALTER TABLE nodes ADD COLUMN tcp_connections INTEGER DEFAULT 0",
 	}
 	for _, m := range migrations {
 		DB.Exec(m) // Ignore errors (column already exists)
@@ -143,7 +145,7 @@ func GetNodes() ([]Node, error) {
 		rx_bytes_per_sec, tx_bytes_per_sec,
 		cpu_load_percent, load_avg_1, load_avg_5, load_avg_15,
 		mem_total_bytes, mem_used_bytes, uptime_seconds,
-		net_drops_rx, net_drops_tx, file_descriptors
+		net_drops_rx, net_drops_tx, file_descriptors, tcp_connections
 		FROM nodes`)
 	if err != nil {
 		return nil, err
@@ -158,7 +160,7 @@ func GetNodes() ([]Node, error) {
 			&n.RxBytesPerSec, &n.TxBytesPerSec,
 			&n.CpuLoadPercent, &n.LoadAvg1, &n.LoadAvg5, &n.LoadAvg15,
 			&n.MemTotalBytes, &n.MemUsedBytes, &n.UptimeSeconds,
-			&n.NetDropsRx, &n.NetDropsTx, &n.FileDescriptors)
+			&n.NetDropsRx, &n.NetDropsTx, &n.FileDescriptors, &n.TcpConnections)
 		if err != nil {
 			return nil, err
 		}
@@ -200,13 +202,13 @@ func UpdateNodeTrafficStats(id int, addUsedBytes, rxSpeed, txSpeed int64) error 
 }
 
 // UpdateNodeSystemMetrics updates system-level metrics for a node
-func UpdateNodeSystemMetrics(id int, cpuPercent float64, la1, la5, la15 float64, memTotal, memUsed, uptime, netDropsRx, netDropsTx, fds int64) error {
+func UpdateNodeSystemMetrics(id int, cpuPercent float64, la1, la5, la15 float64, memTotal, memUsed, uptime, netDropsRx, netDropsTx, fds, tcpConns int64) error {
 	_, err := DB.Exec(`UPDATE nodes SET 
 		cpu_load_percent = ?, load_avg_1 = ?, load_avg_5 = ?, load_avg_15 = ?,
 		mem_total_bytes = ?, mem_used_bytes = ?, uptime_seconds = ?,
-		net_drops_rx = ?, net_drops_tx = ?, file_descriptors = ?
+		net_drops_rx = ?, net_drops_tx = ?, file_descriptors = ?, tcp_connections = ?
 		WHERE id = ?`,
-		cpuPercent, la1, la5, la15, memTotal, memUsed, uptime, netDropsRx, netDropsTx, fds, id)
+		cpuPercent, la1, la5, la15, memTotal, memUsed, uptime, netDropsRx, netDropsTx, fds, tcpConns, id)
 	return err
 }
 

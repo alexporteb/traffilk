@@ -37,6 +37,7 @@
     "uptime": "Uptime",
     "netDrops": "Net Drops",
     "fileDescriptors": "Open FDs",
+    "tcpConnections": "TCP Connections",
     "speed": "Speed",
     "rxSpeed": "RX Speed",
     "txSpeed": "TX Speed",

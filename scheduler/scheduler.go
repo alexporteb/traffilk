@@ -63,7 +63,7 @@ func PollNode(node db.Node) {
 		db.UpdateNodeStatus(node.ID, "down")
 		db.UpdateNodeTrafficStats(node.ID, 0, 0, 0)
 		// Zero out system metrics when node is down
-		db.UpdateNodeSystemMetrics(node.ID, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+		db.UpdateNodeSystemMetrics(node.ID, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 		return
 	}
 
@@ -121,6 +121,7 @@ func PollNode(node db.Node) {
 		metrics.NetDropsRx,
 		metrics.NetDropsTx,
 		metrics.FileDescriptors,
+		metrics.TcpConnections,
 	)
 }
 

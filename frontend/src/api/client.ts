@@ -44,6 +44,7 @@ export interface Node {
   netDropsRx: number;
   netDropsTx: number;
   fileDescriptors: number;
+  tcpConnections: number;
 }
 
 export interface DailyTraffic {

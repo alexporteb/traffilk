@@ -1,6 +1,6 @@
 import { SimpleGrid, Progress, Text, Stack } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
-import { TbCpu, TbActivity, TbServer, TbClock, TbWifiOff, TbFiles } from 'react-icons/tb';
+import { TbCpu, TbActivity, TbServer, TbClock, TbWifiOff, TbFiles, TbNetwork } from 'react-icons/tb';
 import { MetricCard } from './MetricCard';
 import { formatBytes, formatUptime, formatPercent } from '../utils/format';
 import type { Node } from '../api/client';
@@ -80,6 +80,12 @@ export function SystemMetrics({ node, loading }: SystemMetricsProps) {
         title={t('metrics.fileDescriptors')}
         value={node ? node.fileDescriptors.toString() : '—'}
         icon={<TbFiles size={20} />}
+        loading={loading}
+      />
+      <MetricCard
+        title={t('metrics.tcpConnections')}
+        value={node ? node.tcpConnections.toString() : '—'}
+        icon={<TbNetwork size={20} />}
         loading={loading}
       />
     </SimpleGrid>

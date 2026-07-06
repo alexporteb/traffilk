@@ -26,6 +26,7 @@ type NodeMetrics struct {
 	NetDropsRx      int64   // sum of node_network_receive_drop_total (physical interfaces)
 	NetDropsTx      int64   // sum of node_network_transmit_drop_total (physical interfaces)
 	FileDescriptors int64   // node_filefd_allocated
+	TcpConnections  int64   // node_netstat_Tcp_CurrEstab
 }
 
 // UptimeSeconds returns the computed uptime in seconds
@@ -127,6 +128,9 @@ func ReadAllMetrics(url string) (*NodeMetrics, error) {
 		} else if strings.HasPrefix(line, "node_filefd_allocated ") {
 			val, _ := parseMetricValue(line)
 			metrics.FileDescriptors = int64(val)
+		} else if strings.HasPrefix(line, "node_netstat_Tcp_CurrEstab ") {
+			val, _ := parseMetricValue(line)
+			metrics.TcpConnections = int64(val)
 		}
 	}
 
