@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 	"traffilk/db"
 
@@ -24,8 +25,8 @@ func initJwtKey() []byte {
 }
 
 var jwtKey = initJwtKey()
-var adminUser = getEnv("ADMIN_USER", "admin")
-var adminPass = getEnv("ADMIN_PASS", "admin")
+var adminUser = strings.Trim(getEnv("ADMIN_USER", "admin"), " \t\"'\r\n")
+var adminPass = strings.Trim(getEnv("ADMIN_PASS", "admin"), " \t\"'\r\n")
 
 type Credentials struct {
 	Username string `json:"username"`

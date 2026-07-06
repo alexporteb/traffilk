@@ -11,16 +11,26 @@ import (
 var DB *sql.DB
 
 type Node struct {
-	ID                      int    `json:"id"`
-	Name                    string `json:"name"`
-	URL                     string `json:"url"`
-	Status                  string `json:"status"`
-	TrafficUsedBytes        int64  `json:"trafficUsedBytes"`
-	TrafficLimitBytes       int64  `json:"trafficLimitBytes"`
-	IsTrafficTrackingActive bool   `json:"isTrafficTrackingActive"`
-	TrafficResetDay         int    `json:"trafficResetDay"`
-	RxBytesPerSec           int64  `json:"rxBytesPerSec"`
-	TxBytesPerSec           int64  `json:"txBytesPerSec"`
+	ID                      int     `json:"id"`
+	Name                    string  `json:"name"`
+	URL                     string  `json:"url"`
+	Status                  string  `json:"status"`
+	TrafficUsedBytes        int64   `json:"trafficUsedBytes"`
+	TrafficLimitBytes       int64   `json:"trafficLimitBytes"`
+	IsTrafficTrackingActive bool    `json:"isTrafficTrackingActive"`
+	TrafficResetDay         int     `json:"trafficResetDay"`
+	RxBytesPerSec           int64   `json:"rxBytesPerSec"`
+	TxBytesPerSec           int64   `json:"txBytesPerSec"`
+	CpuLoadPercent          float64 `json:"cpuLoadPercent"`
+	LoadAvg1                float64 `json:"loadAvg1"`
+	LoadAvg5                float64 `json:"loadAvg5"`
+	LoadAvg15               float64 `json:"loadAvg15"`
+	MemTotalBytes           int64   `json:"memTotalBytes"`
+	MemUsedBytes            int64   `json:"memUsedBytes"`
+	UptimeSeconds           int64   `json:"uptimeSeconds"`
+	NetDropsRx              int64   `json:"netDropsRx"`
+	NetDropsTx              int64   `json:"netDropsTx"`
+	FileDescriptors         int64   `json:"fileDescriptors"`
 }
 
 type TrafficLog struct {
@@ -77,14 +87,31 @@ func createTables() {
 		log.Fatal("Failed to create nodes table:", err)
 	}
 
-	// Safe migration: add status column if it doesn't exist
-	DB.Exec("ALTER TABLE nodes ADD COLUMN status TEXT DEFAULT 'unknown'")
-	DB.Exec("ALTER TABLE nodes ADD COLUMN traffic_used_bytes INTEGER DEFAULT 0")
-	DB.Exec("ALTER TABLE nodes ADD COLUMN traffic_limit_bytes INTEGER DEFAULT 0")
-	DB.Exec("ALTER TABLE nodes ADD COLUMN is_traffic_tracking_active BOOLEAN DEFAULT 0")
-	DB.Exec("ALTER TABLE nodes ADD COLUMN traffic_reset_day INTEGER DEFAULT 1")
-	DB.Exec("ALTER TABLE nodes ADD COLUMN rx_bytes_per_sec INTEGER DEFAULT 0")
-	DB.Exec("ALTER TABLE nodes ADD COLUMN tx_bytes_per_sec INTEGER DEFAULT 0")
+	// Safe migrations: add columns if they don't exist (ALTER TABLE is idempotent with IF NOT EXISTS in newer SQLite,
+	// but older versions silently fail on duplicate column which is safe)
+	migrations := []string{
+		"ALTER TABLE nodes ADD COLUMN status TEXT DEFAULT 'unknown'",
+		"ALTER TABLE nodes ADD COLUMN traffic_used_bytes INTEGER DEFAULT 0",
+		"ALTER TABLE nodes ADD COLUMN traffic_limit_bytes INTEGER DEFAULT 0",
+		"ALTER TABLE nodes ADD COLUMN is_traffic_tracking_active BOOLEAN DEFAULT 0",
+		"ALTER TABLE nodes ADD COLUMN traffic_reset_day INTEGER DEFAULT 1",
+		"ALTER TABLE nodes ADD COLUMN rx_bytes_per_sec INTEGER DEFAULT 0",
+		"ALTER TABLE nodes ADD COLUMN tx_bytes_per_sec INTEGER DEFAULT 0",
+		// System metrics columns
+		"ALTER TABLE nodes ADD COLUMN cpu_load_percent REAL DEFAULT 0",
+		"ALTER TABLE nodes ADD COLUMN load_avg_1 REAL DEFAULT 0",
+		"ALTER TABLE nodes ADD COLUMN load_avg_5 REAL DEFAULT 0",
+		"ALTER TABLE nodes ADD COLUMN load_avg_15 REAL DEFAULT 0",
+		"ALTER TABLE nodes ADD COLUMN mem_total_bytes INTEGER DEFAULT 0",
+		"ALTER TABLE nodes ADD COLUMN mem_used_bytes INTEGER DEFAULT 0",
+		"ALTER TABLE nodes ADD COLUMN uptime_seconds INTEGER DEFAULT 0",
+		"ALTER TABLE nodes ADD COLUMN net_drops_rx INTEGER DEFAULT 0",
+		"ALTER TABLE nodes ADD COLUMN net_drops_tx INTEGER DEFAULT 0",
+		"ALTER TABLE nodes ADD COLUMN file_descriptors INTEGER DEFAULT 0",
+	}
+	for _, m := range migrations {
+		DB.Exec(m) // Ignore errors (column already exists)
+	}
 
 	_, err = DB.Exec(trafficTable)
 	if err != nil {
@@ -111,7 +138,13 @@ func createTables() {
 
 // GetNodes returns all nodes
 func GetNodes() ([]Node, error) {
-	rows, err := DB.Query("SELECT id, name, url, status, traffic_used_bytes, traffic_limit_bytes, is_traffic_tracking_active, traffic_reset_day, rx_bytes_per_sec, tx_bytes_per_sec FROM nodes")
+	rows, err := DB.Query(`SELECT id, name, url, status, 
+		traffic_used_bytes, traffic_limit_bytes, is_traffic_tracking_active, traffic_reset_day, 
+		rx_bytes_per_sec, tx_bytes_per_sec,
+		cpu_load_percent, load_avg_1, load_avg_5, load_avg_15,
+		mem_total_bytes, mem_used_bytes, uptime_seconds,
+		net_drops_rx, net_drops_tx, file_descriptors
+		FROM nodes`)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +153,12 @@ func GetNodes() ([]Node, error) {
 	var nodes []Node
 	for rows.Next() {
 		var n Node
-		err := rows.Scan(&n.ID, &n.Name, &n.URL, &n.Status, &n.TrafficUsedBytes, &n.TrafficLimitBytes, &n.IsTrafficTrackingActive, &n.TrafficResetDay, &n.RxBytesPerSec, &n.TxBytesPerSec)
+		err := rows.Scan(&n.ID, &n.Name, &n.URL, &n.Status,
+			&n.TrafficUsedBytes, &n.TrafficLimitBytes, &n.IsTrafficTrackingActive, &n.TrafficResetDay,
+			&n.RxBytesPerSec, &n.TxBytesPerSec,
+			&n.CpuLoadPercent, &n.LoadAvg1, &n.LoadAvg5, &n.LoadAvg15,
+			&n.MemTotalBytes, &n.MemUsedBytes, &n.UptimeSeconds,
+			&n.NetDropsRx, &n.NetDropsTx, &n.FileDescriptors)
 		if err != nil {
 			return nil, err
 		}
@@ -161,6 +199,17 @@ func UpdateNodeTrafficStats(id int, addUsedBytes, rxSpeed, txSpeed int64) error 
 	return err
 }
 
+// UpdateNodeSystemMetrics updates system-level metrics for a node
+func UpdateNodeSystemMetrics(id int, cpuPercent float64, la1, la5, la15 float64, memTotal, memUsed, uptime, netDropsRx, netDropsTx, fds int64) error {
+	_, err := DB.Exec(`UPDATE nodes SET 
+		cpu_load_percent = ?, load_avg_1 = ?, load_avg_5 = ?, load_avg_15 = ?,
+		mem_total_bytes = ?, mem_used_bytes = ?, uptime_seconds = ?,
+		net_drops_rx = ?, net_drops_tx = ?, file_descriptors = ?
+		WHERE id = ?`,
+		cpuPercent, la1, la5, la15, memTotal, memUsed, uptime, netDropsRx, netDropsTx, fds, id)
+	return err
+}
+
 // DeleteNode removes a node
 func DeleteNode(id int) error {
 	_, err := DB.Exec("DELETE FROM nodes WHERE id = ?", id)
@@ -193,9 +242,6 @@ func GetLatestTrafficLog(nodeID int) (*TrafficLog, error) {
 
 // GetDailyTraffic returns aggregated daily traffic for a node
 func GetDailyTraffic(nodeID int) ([]DailyTraffic, error) {
-	// Simple query to get daily deltas. We need to sum up deltas correctly.
-	// We'll calculate the daily deltas from the Go side or SQL side.
-	// Doing it from SQL side with window functions (SQLite 3.25+):
 	query := `
 	WITH ranked AS (
 		SELECT 
@@ -271,4 +317,3 @@ func ValidateAPIToken(tokenHash string) bool {
 	err := DB.QueryRow("SELECT id FROM api_tokens WHERE token_hash = ?", tokenHash).Scan(&id)
 	return err == nil
 }
-

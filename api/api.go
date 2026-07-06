@@ -6,49 +6,38 @@ import (
 	"encoding/hex"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
+	"sync"
+	"time"
 	"traffilk/db"
 	"traffilk/scheduler"
 
 	"github.com/gin-gonic/gin"
 )
 
+// loginAttempt tracks brute-force protection state
+type loginAttempt struct {
+	count    int
+	lastTime time.Time
+}
+
+var (
+	loginAttempts = make(map[string]*loginAttempt)
+	loginMu       sync.Mutex
+)
+
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
+	// Security headers middleware
+	r.Use(securityHeaders())
+
 	// Unprotected routes
-	r.StaticFile("/login", "./ui/login.html")
-	r.StaticFile("/favicon.ico", "./ui/logo.png")
-	r.POST("/api/traffilk/login", LoginHandler)
+	r.POST("/api/traffilk/login", rateLimitLogin(), LoginHandler)
 	r.POST("/api/traffilk/logout", LogoutHandler)
 
-	// UI protection middleware
-	r.Use(func(c *gin.Context) {
-		path := c.Request.URL.Path
-		if path == "/ui" || (len(path) >= 4 && path[:4] == "/ui/") {
-			// Allow public access to static assets required for login page
-			if (len(path) >= 11 && path[:11] == "/ui/assets/") || path == "/ui/logo.png" {
-				c.Next()
-				return
-			}
-			
-			_, err := c.Cookie("token")
-			if err != nil {
-				c.Header("Location", "../login")
-				c.AbortWithStatus(http.StatusFound)
-				return
-			}
-		}
-		c.Next()
-	})
-
-	// Serve static files from UI folder
-	r.Static("/ui", "./ui")
-	r.Any("/", func(c *gin.Context) {
-		c.Header("Location", "ui/")
-		c.AbortWithStatus(http.StatusFound)
-	})
-
+	// API routes (protected)
 	api := r.Group("/api/traffilk")
 	api.Use(AuthMiddleware())
 	{
@@ -57,13 +46,94 @@ func SetupRouter() *gin.Engine {
 		api.PUT("/nodes/:id", updateNode)
 		api.DELETE("/nodes/:id", deleteNode)
 		api.GET("/nodes/:id/traffic", getNodeTraffic)
-		
+
 		api.GET("/tokens", getTokens)
 		api.POST("/tokens", createToken)
 		api.DELETE("/tokens/:id", deleteToken)
 	}
 
+	// Serve React SPA
+	setupSPA(r)
+
 	return r
+}
+
+// setupSPA serves the React frontend build output
+func setupSPA(r *gin.Engine) {
+	// Determine the frontend dist path
+	distPath := "./frontend/dist"
+	if _, err := os.Stat(distPath); os.IsNotExist(err) {
+		// Fallback: try legacy ui/ directory
+		distPath = "./ui"
+	}
+
+	// Serve static assets (js, css, images)
+	r.Static("/assets", distPath+"/assets")
+	r.StaticFile("/favicon.ico", distPath+"/favicon.ico")
+
+	// SPA fallback: serve index.html for all non-API, non-asset routes
+	r.NoRoute(func(c *gin.Context) {
+		path := c.Request.URL.Path
+		// Don't serve HTML for API routes
+		if len(path) >= 4 && path[:4] == "/api" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Not found"})
+			return
+		}
+		c.File(distPath + "/index.html")
+	})
+}
+
+// securityHeaders adds security-related HTTP headers to all responses
+func securityHeaders() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Header("X-Content-Type-Options", "nosniff")
+		c.Header("X-Frame-Options", "DENY")
+		c.Header("X-XSS-Protection", "1; mode=block")
+		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
+		c.Header("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+		// CSP: allow self, inline styles (Mantine needs them)
+		c.Header("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'")
+		c.Next()
+	}
+}
+
+// rateLimitLogin prevents brute-force login attacks (max 5 attempts per IP per minute)
+func rateLimitLogin() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ip := c.ClientIP()
+		loginMu.Lock()
+		attempt, exists := loginAttempts[ip]
+		now := time.Now()
+
+		if !exists {
+			loginAttempts[ip] = &loginAttempt{count: 1, lastTime: now}
+			loginMu.Unlock()
+			c.Next()
+			return
+		}
+
+		// Reset counter if more than 1 minute has passed
+		if now.Sub(attempt.lastTime) > time.Minute {
+			attempt.count = 1
+			attempt.lastTime = now
+			loginMu.Unlock()
+			c.Next()
+			return
+		}
+
+		attempt.count++
+		attempt.lastTime = now
+
+		if attempt.count > 5 {
+			loginMu.Unlock()
+			c.JSON(http.StatusTooManyRequests, gin.H{"error": "Too many login attempts. Try again later."})
+			c.Abort()
+			return
+		}
+
+		loginMu.Unlock()
+		c.Next()
+	}
 }
 
 func getNodes(c *gin.Context) {
@@ -234,4 +304,3 @@ func deleteToken(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
-
