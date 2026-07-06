@@ -2,9 +2,12 @@ package api
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"net/http"
 	"os"
 	"time"
+	"traffilk/db"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -86,15 +89,32 @@ func LogoutHandler(c *gin.Context) {
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString, err := c.Cookie("token")
+		isStaticToken := false
 		if err != nil {
 			// Fallback to Bearer token
 			authHeader := c.GetHeader("Authorization")
 			if authHeader != "" && len(authHeader) > 7 && authHeader[:7] == "Bearer " {
 				tokenString = authHeader[7:]
+				if len(tokenString) > 5 && tokenString[:5] == "trfk_" {
+					isStaticToken = true
+				}
 			} else {
 				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 				return
 			}
+		}
+
+		if isStaticToken {
+			// Validate static API token hash against DB
+			hash := sha256.Sum256([]byte(tokenString))
+			hashString := hex.EncodeToString(hash[:])
+			if !db.ValidateAPIToken(hashString) {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid API token"})
+				return
+			}
+			// Token is valid, proceed
+			c.Next()
+			return
 		}
 
 		claims := &Claims{}

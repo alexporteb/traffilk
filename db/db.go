@@ -25,6 +25,13 @@ type TrafficLog struct {
 	TxBytes   int64     `json:"tx_bytes"`
 }
 
+type APIToken struct {
+	ID        int       `json:"id"`
+	Name      string    `json:"name"`
+	TokenHash string    `json:"-"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type DailyTraffic struct {
 	Date    string `json:"date"`
 	RxBytes int64  `json:"rx_bytes"`
@@ -70,6 +77,19 @@ func createTables() {
 	_, err = DB.Exec(trafficTable)
 	if err != nil {
 		log.Fatal("Failed to create traffic_logs table:", err)
+	}
+
+	apiTokensTable := `
+	CREATE TABLE IF NOT EXISTS api_tokens (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL,
+		token_hash TEXT NOT NULL UNIQUE,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+	);`
+
+	_, err = DB.Exec(apiTokensTable)
+	if err != nil {
+		log.Fatal("Failed to create api_tokens table:", err)
 	}
 
 	// Performance indexes
@@ -188,3 +208,43 @@ func GetDailyTraffic(nodeID int) ([]DailyTraffic, error) {
 	}
 	return daily, nil
 }
+
+// AddAPIToken adds a new token hash
+func AddAPIToken(name, tokenHash string) error {
+	_, err := DB.Exec("INSERT INTO api_tokens (name, token_hash) VALUES (?, ?)", name, tokenHash)
+	return err
+}
+
+// GetAPITokens returns all tokens without their hashes
+func GetAPITokens() ([]APIToken, error) {
+	rows, err := DB.Query("SELECT id, name, created_at FROM api_tokens")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tokens []APIToken
+	for rows.Next() {
+		var t APIToken
+		err := rows.Scan(&t.ID, &t.Name, &t.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		tokens = append(tokens, t)
+	}
+	return tokens, nil
+}
+
+// DeleteAPIToken deletes a token by ID
+func DeleteAPIToken(id int) error {
+	_, err := DB.Exec("DELETE FROM api_tokens WHERE id = ?", id)
+	return err
+}
+
+// ValidateAPIToken checks if a token hash exists
+func ValidateAPIToken(tokenHash string) bool {
+	var id int
+	err := DB.QueryRow("SELECT id FROM api_tokens WHERE token_hash = ?", tokenHash).Scan(&id)
+	return err == nil
+}
+

@@ -1,6 +1,9 @@
 package api
 
 import (
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -54,6 +57,10 @@ func SetupRouter() *gin.Engine {
 		api.PUT("/nodes/:id", updateNode)
 		api.DELETE("/nodes/:id", deleteNode)
 		api.GET("/nodes/:id/traffic", getNodeTraffic)
+		
+		api.GET("/tokens", getTokens)
+		api.POST("/tokens", createToken)
+		api.DELETE("/tokens/:id", deleteToken)
 	}
 
 	return r
@@ -176,3 +183,55 @@ func isValidNodeURL(u string) bool {
 	}
 	return true
 }
+
+func generateToken() (string, string) {
+	b := make([]byte, 16)
+	rand.Read(b)
+	token := "trfk_" + hex.EncodeToString(b)
+	hash := sha256.Sum256([]byte(token))
+	hashString := hex.EncodeToString(hash[:])
+	return token, hashString
+}
+
+func getTokens(c *gin.Context) {
+	tokens, err := db.GetAPITokens()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if tokens == nil {
+		tokens = []db.APIToken{}
+	}
+	c.JSON(http.StatusOK, tokens)
+}
+
+func createToken(c *gin.Context) {
+	var req struct {
+		Name string `json:"name"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil || req.Name == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+	token, hash := generateToken()
+	if err := db.AddAPIToken(req.Name, hash); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	// Return the raw token only once
+	c.JSON(http.StatusOK, gin.H{"token": token})
+}
+
+func deleteToken(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+		return
+	}
+	if err := db.DeleteAPIToken(id); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+

@@ -139,6 +139,9 @@
             
             <!-- Settings / Logout Bottom Bar -->
             <div class="p-4 border-t border-kuma-border flex justify-between items-center bg-kuma-card">
+                <button @click="openTokensModal" :title="t('api_tokens')" class="text-kuma-text hover:text-white transition flex items-center gap-2 text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4v-3.252a1 1 0 01.293-.707l8.198-8.198A6 6 0 0121 9z"></path></svg>
+                </button>
                 <select v-model="currentLang" @change="changeLang" class="form-control text-xs px-2 py-1 w-24">
                     <option value="en">English</option>
                     <option value="ru">Русский</option>
@@ -247,21 +250,64 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
-                <div>
-                    <form @submit.prevent="saveNode">
-                        <div class="mb-4">
-                            <label class="block text-sm text-kuma-text mb-1.5">{{ t('friendly_name') }}</label>
-                            <input v-model="newNode.name" required type="text" class="form-control w-full px-3 py-2" placeholder="e.g. Web Server">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-white">{{ t('friendly_name') }}</label>
+                        <input type="text" v-model="newNode.name" class="form-control w-full p-2" placeholder="My Server">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-white">{{ t('prometheus_url') }}</label>
+                        <input type="text" v-model="newNode.url" class="form-control w-full p-2" placeholder="http://1.2.3.4:9090">
+                    </div>
+                    <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-kuma-border">
+                        <button @click="closeModal" class="btn btn-normal">{{ t('cancel') }}</button>
+                        <button @click="saveNode" class="btn btn-primary">{{ t('save') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Tokens Modal -->
+        <div v-if="showTokensModal" class="fixed inset-0 bg-black/50 backdrop-blur-[3px] flex items-center justify-center z-50 p-4">
+            <div class="shadow-box big-padding w-full max-w-xl transform transition-all">
+                <div class="flex justify-between items-center mb-5 border-b border-kuma-border pb-3">
+                    <h3 class="text-xl font-bold text-white">{{ t('api_tokens') }}</h3>
+                    <button @click="showTokensModal = false" class="text-kuma-text hover:text-white">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <!-- Create Token Form -->
+                    <div class="flex gap-2">
+                        <input type="text" v-model="newTokenName" class="form-control flex-1 p-2" :placeholder="t('token_name')">
+                        <button @click="createToken" class="btn btn-primary whitespace-nowrap">{{ t('create_token') }}</button>
+                    </div>
+
+                    <!-- Token Warning Alert -->
+                    <div v-if="createdToken" class="bg-yellow-900/50 border border-yellow-700 rounded-lg p-4 text-yellow-200">
+                        <div class="font-bold mb-1">{{ t('token_warning') }}</div>
+                        <div class="flex gap-2">
+                            <input type="text" readonly :value="createdToken" class="form-control flex-1 p-2 font-mono text-sm bg-black/30">
+                            <button @click="copyToken(createdToken)" class="btn btn-normal">{{ t('copy') }}</button>
                         </div>
-                        <div class="mb-6">
-                            <label class="block text-sm text-kuma-text mb-1.5">{{ t('prometheus_url') }}</label>
-                            <input v-model="newNode.url" required type="url" class="form-control w-full px-3 py-2" placeholder="https://server.com/metrics">
+                    </div>
+
+                    <!-- Tokens List -->
+                    <div class="mt-4 max-h-60 overflow-y-auto">
+                        <div v-if="apiTokens.length === 0" class="text-center text-kuma-text text-sm py-4">
+                            No tokens found.
                         </div>
-                        <div class="flex justify-end gap-3 pt-2">
-                            <button type="button" @click="closeModal" class="btn btn-normal">{{ t('cancel') }}</button>
-                            <button type="submit" class="btn btn-primary">{{ t('save') }}</button>
+                        <div v-for="token in apiTokens" :key="token.id" class="flex justify-between items-center p-3 border-b border-kuma-border last:border-0 hover:bg-kuma-cardHover transition">
+                            <div>
+                                <div class="text-white font-medium">{{ token.name }}</div>
+                                <div class="text-xs text-kuma-text">{{ new Date(token.created_at).toLocaleString() }}</div>
+                            </div>
+                            <button @click="deleteToken(token.id)" class="text-kuma-danger hover:text-red-400 p-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -300,6 +346,13 @@
                 all_time: "All Time",
                 rx_short: "RX",
                 tx_short: "TX",
+                api_tokens: "API Tokens",
+                create_token: "Create Token",
+                token_name: "Token Name",
+                token_warning: "Copy this token now. You won't be able to see it again!",
+                close: "Close",
+                copy: "Copy",
+                copied: "Copied!"
             },
             ru: {
                 add_monitor: "Добавить сервер",
@@ -330,6 +383,13 @@
                 all_time: "Всё время",
                 rx_short: "Скач.",
                 tx_short: "Отд.",
+                api_tokens: "API Токены",
+                create_token: "Создать токен",
+                token_name: "Имя токена",
+                token_warning: "Скопируйте этот токен сейчас. Вы больше не сможете его увидеть!",
+                close: "Закрыть",
+                copy: "Скопировать",
+                copied: "Скопировано!"
             }
         }
 
@@ -348,7 +408,11 @@
                     currentLang: localStorage.getItem('traffilk_lang') || 'en',
                     showMobileMenu: false,
                     idleTime: 0,
-                    idleInterval: null
+                    idleInterval: null,
+                    showTokensModal: false,
+                    apiTokens: [],
+                    newTokenName: '',
+                    createdToken: null
                 }
             },
             computed: {
@@ -555,6 +619,56 @@
                         }
                     } catch (e) {
                         console.error('Failed to fetch traffic:', e)
+                    }
+                },
+                async openTokensModal() {
+                    this.showTokensModal = true;
+                    this.createdToken = null;
+                    this.newTokenName = '';
+                    await this.fetchTokens();
+                },
+                async fetchTokens() {
+                    try {
+                        const res = await fetch('/api/traffilk/tokens');
+                        if (res.status === 401) { window.location.href = '../login'; return; }
+                        this.apiTokens = await res.json() || [];
+                    } catch (e) {
+                        console.error('Failed to fetch tokens:', e);
+                    }
+                },
+                async createToken() {
+                    if (!this.newTokenName) return;
+                    try {
+                        const res = await fetch('/api/traffilk/tokens', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name: this.newTokenName })
+                        });
+                        if (res.status === 401) { window.location.href = '../login'; return; }
+                        const data = await res.json();
+                        this.createdToken = data.token;
+                        this.newTokenName = '';
+                        await this.fetchTokens();
+                    } catch (e) {
+                        console.error('Failed to create token:', e);
+                    }
+                },
+                async deleteToken(id) {
+                    if (!confirm(this.t('confirm_delete'))) return;
+                    try {
+                        const res = await fetch(`/api/traffilk/tokens/${id}`, { method: 'DELETE' });
+                        if (res.status === 401) { window.location.href = '../login'; return; }
+                        await this.fetchTokens();
+                    } catch (e) {
+                        console.error('Failed to delete token:', e);
+                    }
+                },
+                async copyToken(text) {
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        alert(this.t('copied'));
+                    } catch (e) {
+                        console.error('Failed to copy', e);
                     }
                 },
                 async logout() {
