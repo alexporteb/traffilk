@@ -15,6 +15,7 @@ Traffilk подключается к вашим серверам с метрик
 - **Интерфейс в стиле Uptime Kuma**: Темная тема, закругленные элементы, адаптивный дизайн (без внешних зависимостей типа Google Fonts).
 - **Безопасный доступ**: Экран входа с использованием JWT-токенов, защита от брутфорса и CSRF.
 - **Быстрые обновления**: Опрашивает ноды каждую минуту, а также имеет кнопку для принудительного обновления метрик (Force Refresh).
+- **Системные метрики**: Мониторинг CPU, памяти, Load Average, потерь пакетов, открытых файлов и TCP-соединений в реальном времени.
 - **API-токены**: Возможность создавать статичные токены для автоматизации.
 - **Мультиязычность**: Полный перевод на русский (RU) и английский (EN) языки.
 - **Простое управление**: Добавляйте, изменяйте и удаляйте ноды прямо из браузера (суффикс `/metrics` добавляется автоматически, если вы его забыли).
@@ -150,6 +151,7 @@ V2 features a completely redesigned user interface (inspired by Uptime Kuma) and
 - **Uptime Kuma-inspired UI**: Dark theme, rounded components, responsive design (no external dependencies like Google Fonts).
 - **Secure Access**: Built-in login screen with JWT cookies, CSRF, and brute-force protection.
 - **Fast Updates**: Polls nodes every minute and includes a manual "Force Refresh" button for instant updates.
+- **System Metrics**: Real-time monitoring of CPU, Memory, Load Average, Network Drops, File Descriptors, and TCP Connections.
 - **API Tokens**: Generate static tokens for external automation.
 - **Multi-Language Support**: Fully translated in English (EN) and Russian (RU).
 - **Easy Management**: Add, Edit, and Delete nodes seamlessly (the `/metrics` suffix is automatically appended if forgotten).
