@@ -137,7 +137,7 @@ func updateNode(c *gin.Context) {
 		return
 	}
 
-	err = db.UpdateNode(id, node.Name, node.URL)
+	err = db.UpdateNode(id, node)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

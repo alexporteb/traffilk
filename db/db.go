@@ -11,10 +11,16 @@ import (
 var DB *sql.DB
 
 type Node struct {
-	ID     int    `json:"id"`
-	Name   string `json:"name"`
-	URL    string `json:"url"`
-	Status string `json:"status"`
+	ID                      int    `json:"id"`
+	Name                    string `json:"name"`
+	URL                     string `json:"url"`
+	Status                  string `json:"status"`
+	TrafficUsedBytes        int64  `json:"trafficUsedBytes"`
+	TrafficLimitBytes       int64  `json:"trafficLimitBytes"`
+	IsTrafficTrackingActive bool   `json:"isTrafficTrackingActive"`
+	TrafficResetDay         int    `json:"trafficResetDay"`
+	RxBytesPerSec           int64  `json:"rxBytesPerSec"`
+	TxBytesPerSec           int64  `json:"txBytesPerSec"`
 }
 
 type TrafficLog struct {
@@ -73,6 +79,12 @@ func createTables() {
 
 	// Safe migration: add status column if it doesn't exist
 	DB.Exec("ALTER TABLE nodes ADD COLUMN status TEXT DEFAULT 'unknown'")
+	DB.Exec("ALTER TABLE nodes ADD COLUMN traffic_used_bytes INTEGER DEFAULT 0")
+	DB.Exec("ALTER TABLE nodes ADD COLUMN traffic_limit_bytes INTEGER DEFAULT 0")
+	DB.Exec("ALTER TABLE nodes ADD COLUMN is_traffic_tracking_active BOOLEAN DEFAULT 0")
+	DB.Exec("ALTER TABLE nodes ADD COLUMN traffic_reset_day INTEGER DEFAULT 1")
+	DB.Exec("ALTER TABLE nodes ADD COLUMN rx_bytes_per_sec INTEGER DEFAULT 0")
+	DB.Exec("ALTER TABLE nodes ADD COLUMN tx_bytes_per_sec INTEGER DEFAULT 0")
 
 	_, err = DB.Exec(trafficTable)
 	if err != nil {
@@ -99,7 +111,7 @@ func createTables() {
 
 // GetNodes returns all nodes
 func GetNodes() ([]Node, error) {
-	rows, err := DB.Query("SELECT id, name, url, status FROM nodes")
+	rows, err := DB.Query("SELECT id, name, url, status, traffic_used_bytes, traffic_limit_bytes, is_traffic_tracking_active, traffic_reset_day, rx_bytes_per_sec, tx_bytes_per_sec FROM nodes")
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +120,7 @@ func GetNodes() ([]Node, error) {
 	var nodes []Node
 	for rows.Next() {
 		var n Node
-		err := rows.Scan(&n.ID, &n.Name, &n.URL, &n.Status)
+		err := rows.Scan(&n.ID, &n.Name, &n.URL, &n.Status, &n.TrafficUsedBytes, &n.TrafficLimitBytes, &n.IsTrafficTrackingActive, &n.TrafficResetDay, &n.RxBytesPerSec, &n.TxBytesPerSec)
 		if err != nil {
 			return nil, err
 		}
@@ -119,21 +131,33 @@ func GetNodes() ([]Node, error) {
 
 // AddNode adds a new node
 func AddNode(n Node) error {
-	_, err := DB.Exec("INSERT INTO nodes (name, url) VALUES (?, ?)",
-		n.Name, n.URL)
+	if n.TrafficResetDay == 0 {
+		n.TrafficResetDay = 1
+	}
+	_, err := DB.Exec("INSERT INTO nodes (name, url, traffic_limit_bytes, is_traffic_tracking_active, traffic_reset_day) VALUES (?, ?, ?, ?, ?)",
+		n.Name, n.URL, n.TrafficLimitBytes, n.IsTrafficTrackingActive, n.TrafficResetDay)
 	return err
 }
 
 // UpdateNode updates an existing node
-func UpdateNode(id int, name, url string) error {
-	_, err := DB.Exec("UPDATE nodes SET name = ?, url = ? WHERE id = ?",
-		name, url, id)
+func UpdateNode(id int, n Node) error {
+	if n.TrafficResetDay == 0 {
+		n.TrafficResetDay = 1
+	}
+	_, err := DB.Exec("UPDATE nodes SET name = ?, url = ?, traffic_limit_bytes = ?, is_traffic_tracking_active = ?, traffic_reset_day = ? WHERE id = ?",
+		n.Name, n.URL, n.TrafficLimitBytes, n.IsTrafficTrackingActive, n.TrafficResetDay, id)
 	return err
 }
 
 // UpdateNodeStatus updates the online/offline status of a node
 func UpdateNodeStatus(id int, status string) error {
 	_, err := DB.Exec("UPDATE nodes SET status = ? WHERE id = ?", status, id)
+	return err
+}
+
+// UpdateNodeTrafficStats updates live traffic and speed for a node
+func UpdateNodeTrafficStats(id int, addUsedBytes, rxSpeed, txSpeed int64) error {
+	_, err := DB.Exec("UPDATE nodes SET traffic_used_bytes = traffic_used_bytes + ?, rx_bytes_per_sec = ?, tx_bytes_per_sec = ? WHERE id = ?", addUsedBytes, rxSpeed, txSpeed, id)
 	return err
 }
 

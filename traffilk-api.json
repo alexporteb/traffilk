@@ -24,10 +24,14 @@
         "properties": {
           "id": { "type": "integer" },
           "name": { "type": "string" },
-          "rx_bytes": { "type": "integer" },
-          "tx_bytes": { "type": "integer" },
+          "url": { "type": "string" },
           "status": { "type": "string" },
-          "last_updated": { "type": "string", "format": "date-time" }
+          "trafficUsedBytes": { "type": "integer" },
+          "trafficLimitBytes": { "type": "integer" },
+          "isTrafficTrackingActive": { "type": "boolean" },
+          "trafficResetDay": { "type": "integer" },
+          "rxBytesPerSec": { "type": "integer" },
+          "txBytesPerSec": { "type": "integer" }
         }
       },
       "LoginCredentials": {

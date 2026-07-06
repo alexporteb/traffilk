@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"log"
+	"time"
 	"traffilk/db"
 	"traffilk/scraper"
 
@@ -41,8 +42,11 @@ func PollAllNodes() {
 		if err != nil {
 			log.Printf("Error polling node %s (%s): %v\n", node.Name, node.URL, err)
 			db.UpdateNodeStatus(node.ID, "down")
+			db.UpdateNodeTrafficStats(node.ID, 0, 0, 0)
 			continue
 		}
+
+		prevLog, _ := db.GetLatestTrafficLog(node.ID)
 
 		err = db.AddTrafficLog(node.ID, rx, tx)
 		if err != nil {
@@ -50,6 +54,28 @@ func PollAllNodes() {
 		} else {
 			db.UpdateNodeStatus(node.ID, "up")
 			log.Printf("Successfully polled node %s: RX %d, TX %d\n", node.Name, rx, tx)
+
+			var rxSpeed, txSpeed, addUsedBytes int64
+			if prevLog != nil {
+				deltaRx := rx - prevLog.RxBytes
+				deltaTx := tx - prevLog.TxBytes
+				if deltaRx < 0 {
+					deltaRx = rx
+				}
+				if deltaTx < 0 {
+					deltaTx = tx
+				}
+
+				seconds := int64(time.Since(prevLog.Timestamp).Seconds())
+				if seconds <= 0 {
+					seconds = 1
+				}
+
+				rxSpeed = deltaRx / seconds
+				txSpeed = deltaTx / seconds
+				addUsedBytes = deltaRx + deltaTx
+			}
+			db.UpdateNodeTrafficStats(node.ID, addUsedBytes, rxSpeed, txSpeed)
 		}
 	}
 	log.Println("Polling complete.")
