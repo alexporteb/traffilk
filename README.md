@@ -12,11 +12,12 @@ Traffilk подключается к вашим серверам с метрик
 В версии V2 полностью переработан пользовательский интерфейс (в стиле Uptime Kuma) и добавлена встроенная JWT-авторизация.
 
 ### Особенности
-- **Красивый интерфейс в стиле Uptime Kuma**: Темная тема, закругленные элементы, адаптивный дизайн.
-- **Безопасный доступ**: Встроенный экран входа с использованием JWT токенов.
-- **Быстрые обновления**: Опрашивает ноды каждую минуту для отображения графиков в реальном времени.
-- **Мультиязычность**: Полный перевод интерфейса на русский (RU) и английский (EN) языки.
-- **Простое управление**: Добавляйте, изменяйте и удаляйте ноды прямо из браузера.
+- **Интерфейс в стиле Uptime Kuma**: Темная тема, закругленные элементы, адаптивный дизайн (без внешних зависимостей типа Google Fonts).
+- **Безопасный доступ**: Экран входа с использованием JWT-токенов, защита от брутфорса и CSRF.
+- **Быстрые обновления**: Опрашивает ноды каждую минуту, а также имеет кнопку для принудительного обновления метрик (Force Refresh).
+- **API-токены**: Возможность создавать статичные токены для автоматизации.
+- **Мультиязычность**: Полный перевод на русский (RU) и английский (EN) языки.
+- **Простое управление**: Добавляйте, изменяйте и удаляйте ноды прямо из браузера (суффикс `/metrics` добавляется автоматически, если вы его забыли).
 
 ### 🚀 Установка (Docker)
 
@@ -39,7 +40,7 @@ Traffilk подключается к вашим серверам с метрик
    docker compose up -d
    ```
 
-4. Панель будет доступна по адресу `http://localhost:8080/ui/`.
+4. Панель будет доступна по адресу `http://localhost:8080/`.
 
 ---
 
@@ -146,11 +147,12 @@ Traffilk connects to your existing Prometheus metrics endpoints to fetch and agg
 V2 features a completely redesigned user interface (inspired by Uptime Kuma) and built-in JWT authentication.
 
 ### Features
-- **Beautiful Uptime Kuma-inspired UI**: Dark theme, rounded components, responsive design.
-- **Secure Access**: Built-in login screen using JWT cookies.
-- **Fast Updates**: Polls nodes every minute to provide real-time traffic deltas.
+- **Uptime Kuma-inspired UI**: Dark theme, rounded components, responsive design (no external dependencies like Google Fonts).
+- **Secure Access**: Built-in login screen with JWT cookies, CSRF, and brute-force protection.
+- **Fast Updates**: Polls nodes every minute and includes a manual "Force Refresh" button for instant updates.
+- **API Tokens**: Generate static tokens for external automation.
 - **Multi-Language Support**: Fully translated in English (EN) and Russian (RU).
-- **Easy Management**: Add, Edit, and Delete nodes seamlessly.
+- **Easy Management**: Add, Edit, and Delete nodes seamlessly (the `/metrics` suffix is automatically appended if forgotten).
 
 ### 🚀 Quick Start (Docker)
 
@@ -173,7 +175,7 @@ V2 features a completely redesigned user interface (inspired by Uptime Kuma) and
    docker compose up -d
    ```
 
-4. Access the dashboard at `http://localhost:8080/ui/`.
+4. Access the dashboard at `http://localhost:8080/`.
 
 ---
 
