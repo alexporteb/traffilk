@@ -16,8 +16,8 @@ func SetupRouter() *gin.Engine {
 	// Unprotected routes
 	r.StaticFile("/login", "./ui/login.html")
 	r.StaticFile("/favicon.ico", "./ui/logo.png")
-	r.POST("/api/login", LoginHandler)
-	r.POST("/api/logout", LogoutHandler)
+	r.POST("/api/traffilk/login", LoginHandler)
+	r.POST("/api/traffilk/logout", LogoutHandler)
 
 	// UI protection middleware
 	r.Use(func(c *gin.Context) {
@@ -46,7 +46,7 @@ func SetupRouter() *gin.Engine {
 		c.AbortWithStatus(http.StatusFound)
 	})
 
-	api := r.Group("/api")
+	api := r.Group("/api/traffilk")
 	api.Use(AuthMiddleware())
 	{
 		api.GET("/nodes", getNodes)

@@ -451,7 +451,7 @@
                 },
                 async fetchNodes() {
                     try {
-                        const res = await fetch('../api/nodes')
+                        const res = await fetch('/api/traffilk/nodes')
                         if (res.status === 401) {
                             window.location.href = '../login'
                             return
@@ -493,13 +493,13 @@
 
                         let res;
                         if (this.isEditMode) {
-                            res = await fetch(`../api/nodes/${this.editingId}`, {
+                            res = await fetch(`/api/traffilk/nodes/${this.editingId}`, {
                                 method: 'PUT',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify(this.newNode)
                             })
                         } else {
-                            res = await fetch('../api/nodes', {
+                            res = await fetch('/api/traffilk/nodes', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify(this.newNode)
@@ -522,7 +522,7 @@
                 async deleteNode(id) {
                     if (!confirm(this.t('confirm_delete'))) return
                     try {
-                        const res = await fetch(`../api/nodes/${id}`, { method: 'DELETE' })
+                        const res = await fetch(`/api/traffilk/nodes/${id}`, { method: 'DELETE' })
                         if (res.status === 401) { window.location.href = '../login'; return; }
                         
                         if (this.selectedNode && this.selectedNode.id === id) {
@@ -544,7 +544,7 @@
                     if (!this.selectedNode) return
                     const currentId = this.selectedNode.id
                     try {
-                        const res = await fetch(`../api/nodes/${currentId}/traffic`)
+                        const res = await fetch(`/api/traffilk/nodes/${currentId}/traffic`)
                         if (res.status === 401) { window.location.href = '../login'; return; }
                         const data = await res.json() || []
                         
@@ -559,7 +559,7 @@
                 },
                 async logout() {
                     try {
-                        await fetch('../api/logout', { method: 'POST' })
+                        await fetch('/api/traffilk/logout', { method: 'POST' })
                         window.location.href = '../login'
                     } catch (e) {
                         window.location.href = '../login'

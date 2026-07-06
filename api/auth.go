@@ -72,7 +72,7 @@ func LoginHandler(c *gin.Context) {
 	// Set cookie (valid for 24 hours, path / so it applies to /traffilk/ as well if stripped)
 	c.SetSameSite(http.SameSiteStrictMode)
 	c.SetCookie("token", tokenString, int(24*time.Hour.Seconds()), "/", "", false, true)
-	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	c.JSON(http.StatusOK, gin.H{"status": "ok", "token": tokenString})
 }
 
 // LogoutHandler handles POST /api/logout
@@ -82,27 +82,28 @@ func LogoutHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
-// AuthMiddleware protects routes by validating the JWT cookie
+// AuthMiddleware protects routes by validating the JWT cookie or Bearer token
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		cookie, err := c.Cookie("token")
+		tokenString, err := c.Cookie("token")
 		if err != nil {
-			if err == http.ErrNoCookie {
-				// If accessing API, return 401. If accessing UI, redirect.
-				c.AbortWithStatus(http.StatusUnauthorized)
+			// Fallback to Bearer token
+			authHeader := c.GetHeader("Authorization")
+			if authHeader != "" && len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+				tokenString = authHeader[7:]
+			} else {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 				return
 			}
-			c.AbortWithStatus(http.StatusBadRequest)
-			return
 		}
 
 		claims := &Claims{}
-		token, err := jwt.ParseWithClaims(cookie, claims, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 			return jwtKey, nil
 		})
 
 		if err != nil || !token.Valid {
-			c.AbortWithStatus(http.StatusUnauthorized)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 			return
 		}
 

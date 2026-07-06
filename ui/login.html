@@ -165,7 +165,7 @@
                     this.error = ''
                     this.loading = true
                     try {
-                        const res = await fetch('api/login', {
+                        const res = await fetch('/api/traffilk/login', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
