@@ -20,16 +20,20 @@ export function MetricCard({ title, value, icon, color = 'cyan', loading }: Metr
       }}
     >
       <Group justify="space-between" align="flex-start">
-        <Stack gap={2}>
-          <Text size="sm" c="dimmed" fw={500}>
+        <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
+          <Text size="sm" c="dimmed" fw={500} truncate>
             {title}
           </Text>
           {loading ? (
             <Skeleton height={28} width={80} mt={4} />
           ) : (
-            <Text size="xl" fw={700} c="white">
-              {value}
-            </Text>
+            typeof value === 'string' || typeof value === 'number' ? (
+              <Text size="xl" fw={700} c="white" truncate>
+                {value}
+              </Text>
+            ) : (
+              value
+            )
           )}
         </Stack>
         <ThemeIcon size={38} radius="md" variant="light" color={color}>

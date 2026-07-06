@@ -18,7 +18,7 @@ export function SystemMetrics({ node, loading }: SystemMetricsProps) {
     const percent = (node.memUsedBytes / node.memTotalBytes) * 100;
     return (
       <Stack gap={4}>
-        <Text size="lg" fw={700}>
+        <Text size="lg" fw={700} c="white" truncate>
           {formatBytes(node.memUsedBytes)} / {formatBytes(node.memTotalBytes)}
         </Text>
         <Progress value={percent} color="cyan" size="sm" mt={2} />
@@ -30,7 +30,7 @@ export function SystemMetrics({ node, loading }: SystemMetricsProps) {
     if (!node) return '—';
     return (
       <Stack gap={4}>
-        <Text size="lg" fw={700}>
+        <Text size="lg" fw={700} c="white" truncate>
           {formatPercent(node.cpuLoadPercent)}
         </Text>
         <Progress value={node.cpuLoadPercent} color="cyan" size="sm" mt={2} />
