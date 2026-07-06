@@ -64,7 +64,14 @@ export function TrafficChart({ data }: TrafficChartProps) {
                 <stop offset="95%" stopColor={theme.colors.violet[6]} stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <XAxis dataKey="date" stroke="var(--mantine-color-dark-3)" fontSize={12} tickLine={false} axisLine={false} />
+            <XAxis 
+              dataKey="date" 
+              stroke="var(--mantine-color-dark-3)" 
+              fontSize={12} 
+              tickLine={false} 
+              axisLine={false} 
+              tickMargin={10}
+            />
             <YAxis 
               tickFormatter={(val) => formatBytes(val, 0)} 
               stroke="var(--mantine-color-dark-3)" 
@@ -72,6 +79,7 @@ export function TrafficChart({ data }: TrafficChartProps) {
               tickLine={false} 
               axisLine={false}
               width={80}
+              tickMargin={10}
             />
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--mantine-color-dark-6)" />
             <Tooltip content={customTooltip} />
