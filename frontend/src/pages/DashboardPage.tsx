@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { AppShell, Box, Group, Title, ActionIcon, Stack, Button, Text, TextInput, Center } from '@mantine/core';
+import { AppShell, Box, Group, Title, ActionIcon, Stack, Button, Text, TextInput, Center, Burger, Menu } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
 
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
-import { TbTrash, TbEdit, TbInfoCircle, TbRefresh } from 'react-icons/tb';
+import { TbTrash, TbEdit, TbInfoCircle, TbRefresh, TbActivity, TbSettings, TbLanguage, TbLogout } from 'react-icons/tb';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
@@ -11,13 +12,17 @@ import { Sidebar } from '../components/Sidebar';
 import { SystemMetrics } from '../components/SystemMetrics';
 import { TrafficChart } from '../components/TrafficChart';
 import { TokensModal } from '../components/TokensModal';
+import { logout } from '../api/client';
+import { useNavigate } from 'react-router-dom';
 
 import { getNodes, addNode, updateNode, deleteNode, getNodeTraffic, pollNode } from '../api/client';
 
 export default function DashboardPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [opened, { toggle }] = useDisclosure();
   
   const { data: nodes = [], isLoading: nodesLoading } = useQuery({
     queryKey: ['nodes'],
@@ -138,18 +143,62 @@ export default function DashboardPage() {
     });
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      navigate('/login');
+    }
+  };
+
   return (
     <AppShell
-      navbar={{ width: 300, breakpoint: 'sm' }}
+      header={{ height: 60 }}
+      navbar={{ width: 300, breakpoint: 'sm', collapsed: { mobile: !opened } }}
       style={{ backgroundColor: 'var(--mantine-color-dark-9)' }}
     >
+      <AppShell.Header style={{ backgroundColor: 'var(--mantine-color-dark-8)', borderBottom: '1px solid var(--mantine-color-dark-6)' }}>
+        <Group h="100%" px="md" justify="space-between">
+          <Group>
+            <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" color="white" />
+            <Group gap="xs">
+              <Box bg="cyan.9" p={4} style={{ borderRadius: '50%', display: 'flex' }}>
+                <TbActivity size={24} color="white" />
+              </Box>
+              <Title order={3} c="white" fw={600} style={{ letterSpacing: 0.5 }}>Traffilk</Title>
+            </Group>
+          </Group>
+          <Menu position="bottom-end" shadow="md">
+            <Menu.Target>
+              <ActionIcon variant="subtle" color="gray" size="lg">
+                <TbSettings size={24} />
+              </ActionIcon>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Item leftSection={<TbSettings size={14} />} onClick={openTokensModal}>
+                {t('tokens.title')}
+              </Menu.Item>
+              <Menu.Item leftSection={<TbLanguage size={14} />} onClick={() => i18n.changeLanguage(i18n.language === 'en' ? 'ru' : 'en')}>
+                {i18n.language === 'en' ? 'Русский' : 'English'}
+              </Menu.Item>
+              <Menu.Divider />
+              <Menu.Item color="red" leftSection={<TbLogout size={14} />} onClick={handleLogout}>
+                {t('common.logout')}
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+        </Group>
+      </AppShell.Header>
+
       <AppShell.Navbar>
         <Sidebar
           nodes={nodes}
           selectedId={selectedId}
-          onSelect={setSelectedId}
+          onSelect={(id) => {
+            setSelectedId(id);
+            if (opened) toggle();
+          }}
           onAdd={() => openNodeModal()}
-          onManageTokens={openTokensModal}
         />
       </AppShell.Navbar>
 

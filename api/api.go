@@ -70,7 +70,7 @@ func setupSPA(r *gin.Engine) {
 
 	// Serve static assets (js, css, images)
 	r.Static("/assets", distPath+"/assets")
-	r.StaticFile("/favicon.ico", distPath+"/favicon.ico")
+	r.StaticFile("/favicon.svg", distPath+"/favicon.svg")
 
 	// SPA fallback: serve index.html for all non-API, non-asset routes
 	r.NoRoute(func(c *gin.Context) {

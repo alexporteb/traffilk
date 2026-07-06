@@ -68,7 +68,7 @@ export default function LoginPage() {
             <Box bg="cyan.9" p="md" style={{ borderRadius: '50%' }}>
               <TbActivity size={48} color="white" />
             </Box>
-            <Title order={1} c="white" fw={700} style={{ letterSpacing: 1 }}>
+            <Title order={1} c="white" fw={600} style={{ letterSpacing: 0.5 }}>
               Traffilk
             </Title>
           </Stack>
