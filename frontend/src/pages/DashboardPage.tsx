@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Sidebar } from '../components/Sidebar';
 import { SystemMetrics } from '../components/SystemMetrics';
+import { TrafficSummary } from '../components/TrafficSummary';
 import { TrafficChart } from '../components/TrafficChart';
 import { TokensModal } from '../components/TokensModal';
 import { logout } from '../api/client';
@@ -232,6 +233,8 @@ export default function DashboardPage() {
               </Group>
 
               <SystemMetrics node={selectedNode} loading={nodesLoading} />
+
+              {trafficData && trafficData.length > 0 && <TrafficSummary data={trafficData} />}
 
               <TrafficChart data={trafficData} />
             </Stack>

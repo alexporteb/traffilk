@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { Paper, Title, Box, Text, useMantineTheme } from '@mantine/core';
+import { useMemo, useState } from 'react';
+import { Paper, Title, Box, Text, useMantineTheme, Group, SegmentedControl } from '@mantine/core';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useTranslation } from 'react-i18next';
 import type { DailyTraffic } from '../api/client';
@@ -13,13 +13,24 @@ export function TrafficChart({ data }: TrafficChartProps) {
   const { t } = useTranslation();
   const theme = useMantineTheme();
 
+  const [timeframe, setTimeframe] = useState<string>('30');
+
   const chartData = useMemo(() => {
-    return data.map((d) => ({
+    let filtered = data;
+    if (timeframe !== 'all') {
+      const days = parseInt(timeframe, 10);
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - days);
+      const cutoffStr = cutoff.toISOString().split('T')[0];
+      filtered = data.filter(d => d.date >= cutoffStr);
+    }
+
+    return filtered.map((d) => ({
       date: new Date(d.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
       rx: d.rx_bytes,
       tx: d.tx_bytes,
     }));
-  }, [data]);
+  }, [data, timeframe]);
 
   const customTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -50,7 +61,20 @@ export function TrafficChart({ data }: TrafficChartProps) {
 
   return (
     <Paper p="md" radius="md" style={{ backgroundColor: 'var(--mantine-color-dark-8)', border: '1px solid var(--mantine-color-dark-6)' }}>
-      <Title order={4} mb="lg" c="white">{t('dashboard.trafficHistory')}</Title>
+      <Group justify="space-between" mb="lg">
+        <Title order={4} c="white">{t('dashboard.trafficHistory')}</Title>
+        <SegmentedControl
+          size="xs"
+          value={timeframe}
+          onChange={setTimeframe}
+          data={[
+            { label: t('dashboard.days7'), value: '7' },
+            { label: t('dashboard.days30'), value: '30' },
+            { label: t('dashboard.months6'), value: '180' },
+            { label: t('dashboard.allTime'), value: 'all' },
+          ]}
+        />
+      </Group>
       <Box h={300}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
