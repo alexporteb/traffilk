@@ -61,7 +61,7 @@ export interface APIToken {
 
 // Auth
 export const login = (username: string, password: string) =>
-  request<{ status: string; token: string }>('/login', {
+  request<{ status: string }>('/login', {
     method: 'POST',
     body: JSON.stringify({ username, password }),
   });

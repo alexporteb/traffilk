@@ -8,7 +8,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var DB *sql.DB
+var dbConn *sql.DB
 
 type Node struct {
 	ID                      int     `json:"id"`
@@ -57,10 +57,14 @@ type DailyTraffic struct {
 
 func InitDB(filepath string) {
 	var err error
-	DB, err = sql.Open("sqlite3", filepath)
+	dbConn, err = sql.Open("sqlite3", filepath)
 	if err != nil {
 		log.Fatal("Failed to open database:", err)
 	}
+
+	dbConn.SetMaxOpenConns(10)
+	dbConn.SetMaxIdleConns(5)
+	dbConn.SetConnMaxLifetime(time.Hour)
 
 	createTables()
 }
@@ -83,7 +87,7 @@ func createTables() {
 		FOREIGN KEY(node_id) REFERENCES nodes(id)
 	);`
 
-	_, err := DB.Exec(nodesTable)
+	_, err := dbConn.Exec(nodesTable)
 	if err != nil {
 		log.Fatal("Failed to create nodes table:", err)
 	}
@@ -112,10 +116,10 @@ func createTables() {
 		"ALTER TABLE nodes ADD COLUMN tcp_connections INTEGER DEFAULT 0",
 	}
 	for _, m := range migrations {
-		DB.Exec(m) // Ignore errors (column already exists)
+		dbConn.Exec(m) // Ignore errors (column already exists)
 	}
 
-	_, err = DB.Exec(trafficTable)
+	_, err = dbConn.Exec(trafficTable)
 	if err != nil {
 		log.Fatal("Failed to create traffic_logs table:", err)
 	}
@@ -128,19 +132,19 @@ func createTables() {
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	);`
 
-	_, err = DB.Exec(apiTokensTable)
+	_, err = dbConn.Exec(apiTokensTable)
 	if err != nil {
 		log.Fatal("Failed to create api_tokens table:", err)
 	}
 
 	// Performance indexes
-	DB.Exec("CREATE INDEX IF NOT EXISTS idx_traffic_node_timestamp ON traffic_logs(node_id, timestamp)")
-	DB.Exec("CREATE INDEX IF NOT EXISTS idx_nodes_status ON nodes(status)")
+	dbConn.Exec("CREATE INDEX IF NOT EXISTS idx_traffic_node_timestamp ON traffic_logs(node_id, timestamp)")
+	dbConn.Exec("CREATE INDEX IF NOT EXISTS idx_nodes_status ON nodes(status)")
 }
 
 // GetNodes returns all nodes
 func GetNodes() ([]Node, error) {
-	rows, err := DB.Query(`SELECT id, name, url, status, 
+	rows, err := dbConn.Query(`SELECT id, name, url, status, 
 		traffic_used_bytes, traffic_limit_bytes, is_traffic_tracking_active, traffic_reset_day, 
 		rx_bytes_per_sec, tx_bytes_per_sec,
 		cpu_load_percent, load_avg_1, load_avg_5, load_avg_15,
@@ -174,7 +178,7 @@ func AddNode(n Node) error {
 	if n.TrafficResetDay == 0 {
 		n.TrafficResetDay = 1
 	}
-	_, err := DB.Exec("INSERT INTO nodes (name, url, traffic_limit_bytes, is_traffic_tracking_active, traffic_reset_day) VALUES (?, ?, ?, ?, ?)",
+	_, err := dbConn.Exec("INSERT INTO nodes (name, url, traffic_limit_bytes, is_traffic_tracking_active, traffic_reset_day) VALUES (?, ?, ?, ?, ?)",
 		n.Name, n.URL, n.TrafficLimitBytes, n.IsTrafficTrackingActive, n.TrafficResetDay)
 	return err
 }
@@ -184,26 +188,26 @@ func UpdateNode(id int, n Node) error {
 	if n.TrafficResetDay == 0 {
 		n.TrafficResetDay = 1
 	}
-	_, err := DB.Exec("UPDATE nodes SET name = ?, url = ?, traffic_limit_bytes = ?, is_traffic_tracking_active = ?, traffic_reset_day = ? WHERE id = ?",
+	_, err := dbConn.Exec("UPDATE nodes SET name = ?, url = ?, traffic_limit_bytes = ?, is_traffic_tracking_active = ?, traffic_reset_day = ? WHERE id = ?",
 		n.Name, n.URL, n.TrafficLimitBytes, n.IsTrafficTrackingActive, n.TrafficResetDay, id)
 	return err
 }
 
 // UpdateNodeStatus updates the online/offline status of a node
 func UpdateNodeStatus(id int, status string) error {
-	_, err := DB.Exec("UPDATE nodes SET status = ? WHERE id = ?", status, id)
+	_, err := dbConn.Exec("UPDATE nodes SET status = ? WHERE id = ?", status, id)
 	return err
 }
 
 // UpdateNodeTrafficStats updates live traffic and speed for a node
 func UpdateNodeTrafficStats(id int, addUsedBytes, rxSpeed, txSpeed int64) error {
-	_, err := DB.Exec("UPDATE nodes SET traffic_used_bytes = traffic_used_bytes + ?, rx_bytes_per_sec = ?, tx_bytes_per_sec = ? WHERE id = ?", addUsedBytes, rxSpeed, txSpeed, id)
+	_, err := dbConn.Exec("UPDATE nodes SET traffic_used_bytes = traffic_used_bytes + ?, rx_bytes_per_sec = ?, tx_bytes_per_sec = ? WHERE id = ?", addUsedBytes, rxSpeed, txSpeed, id)
 	return err
 }
 
 // UpdateNodeSystemMetrics updates system-level metrics for a node
 func UpdateNodeSystemMetrics(id int, cpuPercent float64, la1, la5, la15 float64, memTotal, memUsed, uptime, netDropsRx, netDropsTx, fds, tcpConns int64) error {
-	_, err := DB.Exec(`UPDATE nodes SET 
+	_, err := dbConn.Exec(`UPDATE nodes SET 
 		cpu_load_percent = ?, load_avg_1 = ?, load_avg_5 = ?, load_avg_15 = ?,
 		mem_total_bytes = ?, mem_used_bytes = ?, uptime_seconds = ?,
 		net_drops_rx = ?, net_drops_tx = ?, file_descriptors = ?, tcp_connections = ?
@@ -214,23 +218,23 @@ func UpdateNodeSystemMetrics(id int, cpuPercent float64, la1, la5, la15 float64,
 
 // DeleteNode removes a node
 func DeleteNode(id int) error {
-	_, err := DB.Exec("DELETE FROM nodes WHERE id = ?", id)
+	_, err := dbConn.Exec("DELETE FROM nodes WHERE id = ?", id)
 	if err == nil {
-		DB.Exec("DELETE FROM traffic_logs WHERE node_id = ?", id)
+		dbConn.Exec("DELETE FROM traffic_logs WHERE node_id = ?", id)
 	}
 	return err
 }
 
 // AddTrafficLog adds a reading
 func AddTrafficLog(nodeID int, rx, tx int64) error {
-	_, err := DB.Exec("INSERT INTO traffic_logs (node_id, rx_bytes, tx_bytes) VALUES (?, ?, ?)",
+	_, err := dbConn.Exec("INSERT INTO traffic_logs (node_id, rx_bytes, tx_bytes) VALUES (?, ?, ?)",
 		nodeID, rx, tx)
 	return err
 }
 
 // GetLatestTrafficLog gets the latest raw counter reading to calculate deltas
 func GetLatestTrafficLog(nodeID int) (*TrafficLog, error) {
-	row := DB.QueryRow("SELECT id, node_id, timestamp, rx_bytes, tx_bytes FROM traffic_logs WHERE node_id = ? ORDER BY timestamp DESC LIMIT 1", nodeID)
+	row := dbConn.QueryRow("SELECT id, node_id, timestamp, rx_bytes, tx_bytes FROM traffic_logs WHERE node_id = ? ORDER BY timestamp DESC LIMIT 1", nodeID)
 	var t TrafficLog
 	err := row.Scan(&t.ID, &t.NodeID, &t.Timestamp, &t.RxBytes, &t.TxBytes)
 	if err != nil {
@@ -263,7 +267,7 @@ func GetDailyTraffic(nodeID int) ([]DailyTraffic, error) {
 	GROUP BY date
 	ORDER BY date ASC
 	`
-	rows, err := DB.Query(query, nodeID)
+	rows, err := dbConn.Query(query, nodeID)
 	if err != nil {
 		return nil, err
 	}
@@ -283,13 +287,13 @@ func GetDailyTraffic(nodeID int) ([]DailyTraffic, error) {
 
 // AddAPIToken adds a new token hash
 func AddAPIToken(name, tokenHash string) error {
-	_, err := DB.Exec("INSERT INTO api_tokens (name, token_hash) VALUES (?, ?)", name, tokenHash)
+	_, err := dbConn.Exec("INSERT INTO api_tokens (name, token_hash) VALUES (?, ?)", name, tokenHash)
 	return err
 }
 
 // GetAPITokens returns all tokens without their hashes
 func GetAPITokens() ([]APIToken, error) {
-	rows, err := DB.Query("SELECT id, name, created_at FROM api_tokens")
+	rows, err := dbConn.Query("SELECT id, name, created_at FROM api_tokens")
 	if err != nil {
 		return nil, err
 	}
@@ -309,13 +313,13 @@ func GetAPITokens() ([]APIToken, error) {
 
 // DeleteAPIToken deletes a token by ID
 func DeleteAPIToken(id int) error {
-	_, err := DB.Exec("DELETE FROM api_tokens WHERE id = ?", id)
+	_, err := dbConn.Exec("DELETE FROM api_tokens WHERE id = ?", id)
 	return err
 }
 
 // ValidateAPIToken checks if a token hash exists
 func ValidateAPIToken(tokenHash string) bool {
 	var id int
-	err := DB.QueryRow("SELECT id FROM api_tokens WHERE token_hash = ?", tokenHash).Scan(&id)
+	err := dbConn.QueryRow("SELECT id FROM api_tokens WHERE token_hash = ?", tokenHash).Scan(&id)
 	return err == nil
 }

@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -40,8 +41,9 @@ func (m *NodeMetrics) UptimeSeconds() int64 {
 // ReadAllMetrics connects to a node_exporter /metrics endpoint and parses
 // all relevant system metrics in a single pass
 func ReadAllMetrics(url string) (*NodeMetrics, error) {
+	skipVerify := os.Getenv("SKIP_TLS_VERIFY") == "true"
 	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: skipVerify},
 	}
 	client := &http.Client{
 		Transport: tr,

@@ -10,7 +10,7 @@ services:
     environment:
       - TZ=UTC
       - ADMIN_USER=admin
-      - ADMIN_PASS=admin
+      - ADMIN_PASS=changeme_secure_password
     networks:
       - remnawave-network
 

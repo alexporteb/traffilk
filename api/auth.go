@@ -3,7 +3,9 @@ package api
 import (
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/hex"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -12,6 +14,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func initJwtKey() []byte {
@@ -26,7 +29,18 @@ func initJwtKey() []byte {
 
 var jwtKey = initJwtKey()
 var adminUser = strings.Trim(getEnv("ADMIN_USER", "admin"), " \t\"'\r\n")
-var adminPass = strings.Trim(getEnv("ADMIN_PASS", "admin"), " \t\"'\r\n")
+var adminPassHash []byte
+var cookieSecure = getEnv("COOKIE_SECURE", "false") == "true"
+
+func init() {
+	pass := strings.Trim(getEnv("ADMIN_PASS", "changeme_secure_password"), " \t\"'\r\n")
+	hash, err := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
+	if err != nil {
+		log.Fatal("Failed to hash admin password:", err)
+	}
+	adminPassHash = hash
+	os.Setenv("ADMIN_PASS", "")
+}
 
 type Credentials struct {
 	Username string `json:"username"`
@@ -53,7 +67,9 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
-	if creds.Username != adminUser || creds.Password != adminPass {
+	userOk := subtle.ConstantTimeCompare([]byte(creds.Username), []byte(adminUser)) == 1
+	passErr := bcrypt.CompareHashAndPassword(adminPassHash, []byte(creds.Password))
+	if !userOk || passErr != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
 		return
 	}
@@ -75,14 +91,14 @@ func LoginHandler(c *gin.Context) {
 
 	// Set cookie (valid for 24 hours, path / so it applies to /traffilk/ as well if stripped)
 	c.SetSameSite(http.SameSiteStrictMode)
-	c.SetCookie("token", tokenString, int(24*time.Hour.Seconds()), "/", "", false, true)
-	c.JSON(http.StatusOK, gin.H{"status": "ok", "token": tokenString})
+	c.SetCookie("token", tokenString, int(24*time.Hour.Seconds()), "/", "", cookieSecure, true)
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
 // LogoutHandler handles POST /api/logout
 func LogoutHandler(c *gin.Context) {
 	c.SetSameSite(http.SameSiteStrictMode)
-	c.SetCookie("token", "", -1, "/", "", false, true)
+	c.SetCookie("token", "", -1, "/", "", cookieSecure, true)
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 

@@ -18,7 +18,7 @@ COPY . .
 RUN CGO_ENABLED=1 GOOS=linux go build -a -ldflags '-w -s' -o traffilk-app .
 
 # Stage 3: Final lightweight image
-FROM alpine:latest
+FROM alpine:3.20
 WORKDIR /app
 # Install ca-certificates and tzdata, sqlite
 RUN apk add --no-cache ca-certificates tzdata sqlite

@@ -28,17 +28,31 @@ fi
 TMP_DIR=$(mktemp -d)
 cd "$TMP_DIR"
 
-echo "Downloading node_exporter..."
-if ! $DOWNLOAD https://github.com/prometheus/node_exporter/releases/download/v1.6.1/node_exporter-1.6.1.linux-amd64.tar.gz | tar xvz; then
-    echo "Error: Failed to download or extract node_exporter."
+VERSION="1.8.2"
+ARCHIVE="node_exporter-${VERSION}.linux-amd64.tar.gz"
+URL="https://github.com/prometheus/node_exporter/releases/download/v${VERSION}/${ARCHIVE}"
+CHECKSUM="6809dd0b3ec45fd6e992c19071d6b5253aed3ead7bf0686885a51d85c6643c66"
+
+echo "Downloading node_exporter v${VERSION}..."
+if ! $DOWNLOAD "$URL" > "$ARCHIVE"; then
+    echo "Error: Failed to download node_exporter."
     cd /
     rm -rf "$TMP_DIR"
     exit 1
 fi
 
+echo "$CHECKSUM  $ARCHIVE" | sha256sum -c - || {
+    echo "Error: Checksum verification failed!"
+    cd /
+    rm -rf "$TMP_DIR"
+    exit 1
+}
+
+tar xvz -f "$ARCHIVE"
+
 # 4. Secure installation
 echo "Installing binary..."
-$SUDO mv node_exporter-1.6.1.linux-amd64/node_exporter /usr/local/bin/
+$SUDO mv node_exporter-${VERSION}.linux-amd64/node_exporter /usr/local/bin/
 $SUDO chown root:root /usr/local/bin/node_exporter
 $SUDO chmod 755 /usr/local/bin/node_exporter
 

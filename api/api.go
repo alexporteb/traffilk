@@ -4,6 +4,8 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -26,6 +28,22 @@ var (
 	loginAttempts = make(map[string]*loginAttempt)
 	loginMu       sync.Mutex
 )
+
+func init() {
+	go func() {
+		for {
+			time.Sleep(5 * time.Minute)
+			loginMu.Lock()
+			now := time.Now()
+			for ip, attempt := range loginAttempts {
+				if now.Sub(attempt.lastTime) > time.Minute {
+					delete(loginAttempts, ip)
+				}
+			}
+			loginMu.Unlock()
+		}
+	}()
+}
 
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
@@ -94,6 +112,7 @@ func securityHeaders() gin.HandlerFunc {
 		c.Header("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
 		// CSP: allow self, inline styles (Mantine needs them)
 		c.Header("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'")
+		c.Header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 		c.Next()
 	}
 }
@@ -140,7 +159,8 @@ func rateLimitLogin() gin.HandlerFunc {
 func getNodes(c *gin.Context) {
 	nodes, err := db.GetNodes()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Printf("DB error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 		return
 	}
 	if nodes == nil {
@@ -163,7 +183,8 @@ func addNode(c *gin.Context) {
 
 	err := db.AddNode(node)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Printf("DB error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 		return
 	}
 
@@ -183,7 +204,8 @@ func deleteNode(c *gin.Context) {
 
 	err = db.DeleteNode(id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Printf("DB error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
@@ -210,7 +232,8 @@ func updateNode(c *gin.Context) {
 
 	err = db.UpdateNode(id, node)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Printf("DB error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 		return
 	}
 
@@ -230,7 +253,8 @@ func getNodeTraffic(c *gin.Context) {
 
 	daily, err := db.GetDailyTraffic(id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Printf("DB error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 		return
 	}
 	if daily == nil {
@@ -249,7 +273,8 @@ func pollNode(c *gin.Context) {
 
 	nodes, err := db.GetNodes()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Printf("DB error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 		return
 	}
 
@@ -281,9 +306,16 @@ func isValidNodeURL(u string) bool {
 	if parsed.Scheme != "http" && parsed.Scheme != "https" {
 		return false
 	}
-	// Block AWS/GCP/Azure cloud metadata IPs
-	if parsed.Hostname() == "169.254.169.254" || parsed.Hostname() == "169.254.169.253" || parsed.Hostname() == "metadata.google.internal" {
+	
+	ips, err := net.LookupIP(parsed.Hostname())
+	if err != nil || len(ips) == 0 {
 		return false
+	}
+	
+	for _, ip := range ips {
+		if ip.IsPrivate() || ip.IsLoopback() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified() {
+			return false
+		}
 	}
 	return true
 }
@@ -300,7 +332,8 @@ func generateToken() (string, string) {
 func getTokens(c *gin.Context) {
 	tokens, err := db.GetAPITokens()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Printf("DB error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 		return
 	}
 	if tokens == nil {
@@ -319,7 +352,8 @@ func createToken(c *gin.Context) {
 	}
 	token, hash := generateToken()
 	if err := db.AddAPIToken(req.Name, hash); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Printf("DB error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 		return
 	}
 	// Return the raw token only once
@@ -333,7 +367,8 @@ func deleteToken(c *gin.Context) {
 		return
 	}
 	if err := db.DeleteAPIToken(id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Printf("DB error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
