@@ -86,6 +86,7 @@ EOF
 # 7. Start service
 echo "Starting service..."
 $SUDO systemctl daemon-reload
-$SUDO systemctl enable --now node_exporter
+$SUDO systemctl enable node_exporter
+$SUDO systemctl restart node_exporter
 
 echo "✅ node_exporter successfully installed and secured! Running on port 9100."
